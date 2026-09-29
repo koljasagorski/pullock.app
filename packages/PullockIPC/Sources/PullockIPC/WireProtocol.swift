@@ -6,6 +6,8 @@ public enum ProcessRole: String, Codable, CaseIterable, Sendable { case app, ses
 public enum WirePayload: Equatable, Codable, Sendable {
     case hello(role: ProcessRole)
     case getHealth
+    case getDevices
+    case devices(inventory: [WireDevice], state: StateSnapshot)
     case configure(policy: ProtectionPolicy, expectedRevision: UInt64?)
     case arm(expectedRevision: UInt64)
     case disarm(expectedArming: UInt64)
@@ -14,6 +16,26 @@ public enum WirePayload: Equatable, Codable, Sendable {
     case lockResult(result: ActionResult)
     case performLock(id: ActionID)
     case snapshot(state: StateSnapshot)
+}
+
+/// Public descriptor projection for the authenticated local chooser. No serial
+/// number or storage content crosses this boundary.
+public struct WireDevice: Equatable, Codable, Sendable {
+    public let instance: UInt64
+    public let vendorID: UInt16
+    public let productID: UInt16
+    public let name: String?
+    public init(instance: UInt64, vendorID: UInt16, productID: UInt16, name: String?) {
+        self.instance = instance; self.vendorID = vendorID; self.productID = productID; self.name = name
+    }
+    public var valid: Bool {
+        instance > 0 && vendorID > 0 && productID > 0 && (name.map {
+            !$0.isEmpty && $0.utf8.count <= 256 && !$0.unicodeScalars.contains(where: {
+                CharacterSet.controlCharacters.contains($0) || (0x202A...0x202E).contains($0.value)
+                    || (0x2066...0x2069).contains($0.value)
+            })
+        } ?? true)
+    }
 }
 
 public struct WireEnvelope: Equatable, Codable, Sendable {
@@ -58,7 +80,7 @@ public enum WireCodec {
             throw WireError.unknownFields
         }
         let shapes: [String: Set<String>] = [
-            "hello": ["role"], "getHealth": [], "configure": ["policy", "expectedRevision"],
+            "hello": ["role"], "getHealth": [], "getDevices": [], "devices": ["inventory", "state"], "configure": ["policy", "expectedRevision"],
             "arm": ["expectedRevision"], "disarm": ["expectedArming"], "resetTrigger": ["id"],
             "sessionHeartbeat": ["generation", "progress"], "lockResult": ["result"],
             "performLock": ["id"], "snapshot": ["state"],
@@ -92,7 +114,7 @@ public enum WireCodec {
                     let nullable: Set<String>
                     switch path {
                     case ["payload", "configure"]: nullable = ["expectedRevision"]
-                    case ["payload", "snapshot", "state"]:
+                    case ["payload", "snapshot", "state"], ["payload", "devices", "state"]:
                         nullable = ["policyRevision", "trigger", "lockOutcome", "shutdownOutcome"]
                     default: nullable = []
                     }
@@ -147,6 +169,8 @@ public struct WireSession: Sendable {
         switch payload {
         case .hello: false
         case .getHealth: localRole == .daemon && (remoteRole == .app || remoteRole == .sessionAgent)
+        case .getDevices: localRole == .daemon && remoteRole == .app
+        case .devices: localRole == .app && remoteRole == .daemon
         case .configure, .arm, .disarm, .resetTrigger: localRole == .daemon && remoteRole == .app
         case .sessionHeartbeat, .lockResult: localRole == .daemon && remoteRole == .sessionAgent
         case .performLock: localRole == .sessionAgent && remoteRole == .daemon
@@ -172,13 +196,21 @@ public struct WireSession: Sendable {
         case let .resetTrigger(id):
             guard id.boot == bootID, id.arming > 0 else { throw WireError.invalidPayload }
         case let .snapshot(state):
-            guard state.bootID == bootID, state.generatedAt <= now, now < state.validUntil,
-                  state.validUntil - state.generatedAt <= 60_000 else { throw WireError.staleSnapshot }
-            guard state.status != .armed || state.hasArmedInvariants else { throw WireError.invalidPayload }
-            if state.profile == .live, state.lockOutcome == .simulated || state.shutdownOutcome == .simulated {
-                throw WireError.invalidPayload
-            }
-        case .hello, .getHealth, .disarm: break
+            try validateSnapshot(state, now: now)
+        case let .devices(inventory, state):
+            guard inventory.count <= 128, inventory.allSatisfy(\.valid),
+                  Set(inventory.map(\.instance)).count == inventory.count else { throw WireError.invalidPayload }
+            try validateSnapshot(state, now: now)
+        case .hello, .getHealth, .getDevices, .disarm: break
+        }
+    }
+
+    private func validateSnapshot(_ state: StateSnapshot, now: UInt64) throws {
+        guard state.bootID == bootID, state.generatedAt <= now, now < state.validUntil,
+              state.validUntil - state.generatedAt <= 60_000 else { throw WireError.staleSnapshot }
+        guard state.status != .armed || state.hasArmedInvariants else { throw WireError.invalidPayload }
+        if state.profile == .live, state.lockOutcome == .simulated || state.shutdownOutcome == .simulated {
+            throw WireError.invalidPayload
         }
     }
 }

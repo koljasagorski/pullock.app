@@ -59,6 +59,14 @@ public actor NativeHealthClient {
     }
 
     public func health() async throws -> StateSnapshot {
+        let result = try await request(.getHealth)
+        guard case let .snapshot(snapshot) = result else { close(); throw HealthClientError.invalidReply }
+        return snapshot
+    }
+
+    /// WireSession on the server still enforces this connection's fixed role;
+    /// unsupported operations close the connection. No role can be upgraded.
+    public func request(_ payload: WirePayload) async throws -> WirePayload {
         guard !closed, let current = wire else { throw HealthClientError.disconnected }
         guard !busy else { throw HealthClientError.busy }
         busy = true
@@ -67,13 +75,12 @@ public actor NativeHealthClient {
             guard sequence < UInt64.max else { throw HealthClientError.disconnected }
             sequence += 1
             let request = WireEnvelope(connectionID: current.connectionID, bootID: current.bootID,
-                                       sequence: sequence, payload: .getHealth)
+                                       sequence: sequence, payload: payload)
             let data = try await exchange(WireCodec.encode(request))
             guard !closed, var session = wire else { throw HealthClientError.disconnected }
             let payload = try session.receive(data, now: MonotonicTime.milliseconds)
-            guard case let .snapshot(snapshot) = payload else { throw HealthClientError.invalidReply }
             wire = session
-            return snapshot
+            return payload
         } catch { close(); throw error }
     }
 

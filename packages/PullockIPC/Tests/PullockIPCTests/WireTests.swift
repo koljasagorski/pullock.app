@@ -123,6 +123,42 @@ private struct Peer {
     #expect(accepted == .snapshot(state: core.snapshot))
 }
 
+@Test func deviceInventoryRequiresAppRoleFreshStateAndUniqueValidDescriptors() throws {
+    let device = WireDevice(instance: 1, vendorID: 0x1234, productID: 0x4321, name: "Test stick")
+    let snapshot = try ProtectionReducer(bootID: Peer.boot).snapshot
+    var app = Peer(local: .app, remote: .daemon)
+    try app.hello()
+    let duplicate = try app.packet(.devices(inventory: [device, device], state: snapshot))
+    #expect(throws: WireError.invalidPayload) { try app.session.receive(duplicate, now: 100) }
+    let invalid = try app.packet(.devices(inventory: [WireDevice(instance: 1, vendorID: 1, productID: 1, name: "bad\nname")], state: snapshot))
+    #expect(throws: WireError.invalidPayload) { try app.session.receive(invalid, now: 100) }
+    let valid = try app.packet(.devices(inventory: [device], state: snapshot))
+    #expect(throws: WireError.staleSnapshot) { try app.session.receive(valid, now: 3_000) }
+    #expect(try app.session.receive(valid, now: 100) == .devices(inventory: [device], state: snapshot))
+    var agent = Peer(remote: .sessionAgent)
+    try agent.hello()
+    #expect(throws: WireError.roleViolation) { try agent.session.receive(agent.packet(.getDevices), now: 100) }
+}
+
+@Test func connectionPolicyRejectsNestedExtraFieldsBeforeDispatch() throws {
+    var p = Peer()
+    try p.hello()
+    let selection = try ConnectionIdentity(bootID: Peer.boot, watcher: 1, power: 0, instance: 42)
+    let enrollment = try Enrollment(id: UUID(), vendorID: 0x1234, productID: 0x4321, connection: selection)
+    let policy = try ProtectionPolicy(revision: 1, enrollment: enrollment)
+    let packet = try p.packet(.configure(policy: policy, expectedRevision: nil))
+    var root = try #require(JSONSerialization.jsonObject(with: packet) as? [String: Any])
+    var encoded = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(policy)) as? [String: Any])
+    var identity = try #require(encoded["enrollment"] as? [String: Any])
+    var connection = try #require(identity["connection"] as? [String: Any])
+    connection["persistAfterReboot"] = true
+    identity["connection"] = connection; encoded["enrollment"] = identity
+    root["payload"] = ["configure": ["policy": encoded]]
+    let extra = try JSONSerialization.data(withJSONObject: root)
+    #expect(throws: WireError.unknownFields) { try p.session.receive(extra, now: 100) }
+    _ = try p.session.receive(packet, now: 100)
+}
+
 @Test func replacingConnectionRequiresFreshHandshakeAndNonce() throws {
     var p = Peer()
     try p.hello()

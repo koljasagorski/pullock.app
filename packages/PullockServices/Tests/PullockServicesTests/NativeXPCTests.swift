@@ -137,3 +137,31 @@ private func owner(uid: UInt32, session: Int32) throws -> OwnerSessionPolicy {
     await #expect(throws: (any Error).self) { try await client.health() }
     await client.close()
 }
+
+@Test(.timeLimit(.minutes(1))) func nativeCommandsCarryOSCredentialsAndCannotClaimAnotherRole() async throws {
+    let runtime = try FixtureHealth(), requirement = try ownRequirement()
+    let incoming = try ServiceTrust(requirement: requirement, role: .app, development: true)
+    let outgoing = try ServiceTrust(requirement: requirement, role: .daemon, development: true)
+    let received = Mutex<[ProcessRole]>([])
+    let server = NativeHealthListener(testTrust: incoming, boot: runtime.boot, owner: owner, snapshot: runtime.snapshot,
+        command: { peer, payload, _ in
+            #expect(peer.owner.uid == geteuid() && peer.owner.auditSession > 0)
+            received.withLock { $0.append(peer.role) }
+            guard payload == .getDevices else { throw AuthorityError.unauthorized }
+            return .devices(inventory: [WireDevice(instance: 12, vendorID: 0x1234, productID: 0x4321, name: "Fixture")],
+                state: runtime.snapshot())
+        })
+    server.start()
+    defer { server.stop() }
+    let client = NativeHealthClient(testEndpoint: server.endpoint, trust: outgoing, clientRole: .app, expectedUID: geteuid())
+    try await client.connect()
+    guard case let .devices(inventory, _) = try await client.request(.getDevices) else {
+        Issue.record("Expected bounded device projection"); return
+    }
+    #expect(inventory.count == 1 && inventory.first?.instance == 12)
+    await #expect(throws: (any Error).self) {
+        try await client.request(.sessionHeartbeat(generation: 1, progress: 1))
+    }
+    #expect(received.withLock { $0 } == [.app])
+    await client.close()
+}

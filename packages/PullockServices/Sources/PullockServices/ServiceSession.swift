@@ -23,7 +23,8 @@ public struct ServiceSession: Sendable {
         wire = WireSession(localRole: .daemon, remoteRole: role, connectionID: id, bootID: bootID)
     }
 
-    public mutating func receive(_ data: Data, now: UInt64, snapshot: StateSnapshot) throws -> Data {
+    public mutating func receive(_ data: Data, now: UInt64, snapshot: StateSnapshot,
+                                command: ((WirePayload) throws -> WirePayload)? = nil) throws -> Data {
         guard !closed else { throw ServiceSessionError.closed }
         do {
             let ticket = try budget.begin(byteCount: data.count, now: now)
@@ -41,11 +42,10 @@ public struct ServiceSession: Sendable {
                     guard snapshot.bootID == bootID, snapshot.generatedAt <= now, now < snapshot.validUntil else {
                         throw WireError.staleSnapshot
                     }
-                    response = .snapshot(state: snapshot)
+                    response = try command?(payload) ?? .snapshot(state: snapshot)
                 default:
-                    // Until daemon authority/enrollment/action dispatch is fully
-                    // qualified, this transport exposes only hello and health.
-                    throw ServiceSessionError.operationUnavailable
+                    guard let command else { throw ServiceSessionError.operationUnavailable }
+                    response = try command(payload)
                 }
                 sequence += 1
                 reply = try WireCodec.encode(WireEnvelope(connectionID: id, bootID: bootID,

@@ -5,6 +5,15 @@ import Synchronization
 
 public typealias PeerOwnerProvider = @Sendable (UInt32, Int32) throws -> OwnerSessionPolicy
 
+/// Created only after synchronous validation of the current XPC call. These
+/// credentials come from NSXPCConnection, never a decoded request.
+public struct ServicePeer: Sendable {
+    public let role: ProcessRole
+    public let owner: OwnerSessionPolicy
+    init(role: ProcessRole, owner: OwnerSessionPolicy) { self.role = role; self.owner = owner }
+}
+public typealias ServiceCommandHandler = @Sendable (ServicePeer, WirePayload, UInt64) throws -> WirePayload
+
 /// Real NSXPC transport, deliberately restricted to non-sensitive hello/health.
 /// It does not expose configuration, USB injection or actions. The owner provider
 /// belongs to the trusted host; a client never supplies its policy.
@@ -20,14 +29,16 @@ public final class NativeHealthListener: NSObject, NSXPCListenerDelegate, @unche
     private let owner: PeerOwnerProvider
     private let snapshot: @Sendable () -> StateSnapshot
     private let boot: UUID
+    private let command: ServiceCommandHandler?
     private let timer: DispatchSourceTimer
     public var endpoint: NSXPCListenerEndpoint { listener.endpoint }
     public var connectionCount: Int { state.withLock { $0.channels.count } }
 
     public init(trust: ServiceTrust, boot: UUID, owner: @escaping PeerOwnerProvider,
-                snapshot: @escaping @Sendable () -> StateSnapshot) throws {
+                snapshot: @escaping @Sendable () -> StateSnapshot, command: ServiceCommandHandler? = nil) throws {
         guard trust.role != .daemon else { throw PeerPolicyError.invalidRole }
         self.trust = trust; self.boot = boot; self.owner = owner; self.snapshot = snapshot
+        self.command = command
         let suffix = trust.role == .app ? "app" : "session-agent"
         let prefix = trust.development ? "app.pullock.daemon.development" : "app.pullock.daemon"
         listener = NSXPCListener(machServiceName: "\(prefix).\(suffix)")
@@ -37,8 +48,9 @@ public final class NativeHealthListener: NSObject, NSXPCListenerDelegate, @unche
     }
 
     init(testTrust: ServiceTrust, boot: UUID, owner: @escaping PeerOwnerProvider,
-         snapshot: @escaping @Sendable () -> StateSnapshot) {
+         snapshot: @escaping @Sendable () -> StateSnapshot, command: ServiceCommandHandler? = nil) {
         trust = testTrust; self.boot = boot; self.owner = owner; self.snapshot = snapshot
+        self.command = command
         listener = NSXPCListener.anonymous()
         timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "app.pullock.test-deadlines"))
         super.init()
@@ -79,7 +91,7 @@ public final class NativeHealthListener: NSObject, NSXPCListenerDelegate, @unche
             try current.validate(effectiveUID: connection.effectiveUserIdentifier, auditSession: connection.auditSessionIdentifier)
             connection.setCodeSigningRequirement(trust.requirement)
             let id = UUID()
-            let channel = try HealthChannel(connection: connection, boot: boot, role: trust.role, owner: owner, snapshot: snapshot)
+            let channel = try HealthChannel(connection: connection, boot: boot, role: trust.role, owner: owner, snapshot: snapshot, command: command)
             let accepted = state.withLock { state in
                 guard state.running, !state.stopped, state.channels.count < 8 else { return false }
                 state.channels[id] = channel
@@ -110,10 +122,13 @@ private final class HealthChannel: NSObject, PullockXPCTransport, @unchecked Sen
     private let state: Mutex<State>
     private let owner: PeerOwnerProvider
     private let snapshot: @Sendable () -> StateSnapshot
+    private let command: ServiceCommandHandler?
+    private let role: ProcessRole
 
     init(connection: NSXPCConnection, boot: UUID, role: ProcessRole, owner: @escaping PeerOwnerProvider,
-         snapshot: @escaping @Sendable () -> StateSnapshot) throws {
+         snapshot: @escaping @Sendable () -> StateSnapshot, command: ServiceCommandHandler?) throws {
         self.owner = owner; self.snapshot = snapshot
+        self.command = command; self.role = role
         state = Mutex(State(session: try ServiceSession(bootID: boot, role: role),
                             deadline: Self.deadline(after: 2_000), connection: IncomingPeer(connection)))
     }
@@ -131,7 +146,10 @@ private final class HealthChannel: NSObject, PullockXPCTransport, @unchecked Sen
                 let view = snapshot()
                 let now = MonotonicTime.milliseconds
                 guard now < state.deadline else { throw ConnectionBudgetError.timeout }
-                let value = try state.session.receive(data, now: now, snapshot: view)
+                let handler: ((WirePayload) throws -> WirePayload)? = command.map { command in
+                    { payload in try command(ServicePeer(role: self.role, owner: current), payload, now) }
+                }
+                let value = try state.session.receive(data, now: now, snapshot: view, command: handler)
                 let finished = MonotonicTime.milliseconds
                 guard finished >= now, finished - now < 2_000 else { throw ConnectionBudgetError.timeout }
                 if state.session.established { state.deadline = Self.deadline(after: 5_000) }

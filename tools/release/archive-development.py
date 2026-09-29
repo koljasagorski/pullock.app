@@ -78,4 +78,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError:
+        # Subprocess exception repr includes identity/team command arguments.
+        raise SystemExit("A local signing or signature verification command failed. No archive was published.") from None

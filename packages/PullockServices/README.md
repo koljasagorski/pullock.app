@@ -11,3 +11,9 @@ Native NSXPC-Verbindungen, ein flüchtiger Diagnose-Host und ein separat geprüf
 - Eine flüchtige USB-Verbindungswahl wird niemals gespeichert.
 
 Tests prüfen echte anonyme NSXPC-Verbindungen mit exakter Testhost-Code-Signatur, falsche Gegenstellensignaturen, Sitzungsentzug, Limits, Slotfreigabe und Leerlaufablauf. Sie sind kein Beweis für installierte, separat laufende Developer-ID-Dienste, Fast User Switching oder Root-Aktionssicherheit.
+
+## Autorität und Command-Anbindung
+
+`ProtectionAuthority` ist ein synchroner, Mutex-geschützter Host des Reducers. Der vertrauenswürdige Daemon liefert aktuelle Watcher-/Power-/Session-Ereignisse; Clients können keine Hardwareereignisse injizieren. Owner-Bindung, Rollengrenzen, aktuelle Verbindungsauswahl, Revisionen und Aktionsrückmeldungen werden erneut geprüft. Nur Lock-Verbindungs-Policies sind zulässig; der öffentliche Shortcut darf keine bestätigte Sperre zurückmelden. Effekte werden nach dem Commit abgeholt. Ein nicht bedienter Effektpuffer stoppt weitere Aktivierung, ohne Lock-Anforderungen zu verwerfen.
+
+Native Listener können ausdrücklich einen Command-Handler erhalten. Dieser bekommt `ServicePeer` aus den aktuell geprüften OS-Credentials, nicht aus JSON. Der Default bleibt Health-only; die bestehenden Entwicklungs-Targets aktivieren keinen solchen Aktions-Handler. Die Defaults der Autorität erlauben ebenfalls kein reales ARMED. Tests mit Mock-Fähigkeiten prüfen die komplette Auswahl→Arm→Inventar→Removal→Ergebnis-Transaktion, aber keine echte Sitzungssperre.

@@ -12,13 +12,13 @@ Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch
 | --- | --- |
 | Zustandskern | 41 Tests; Auswahl an Boot/Watcher/Power gebunden, Health-Leases, Ereignisreihenfolge, verriegelte Trigger und getrennte Aktionsanforderungen |
 | USB-Beobachtung | 20 Tests; passiver IOKit-Watcher, aktuelle Geräte verschiedener Hersteller, Auswahl einer einzelnen Verbindung und deren sichere Invalidierung |
-| IPC | 24 Vertrag-/Signatur-/Rollen-/Budgettests |
-| Native Dienste / Speicher | 21 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Verbindungslimits/Timeouts und Dateispeicherhärtung |
+| IPC | 26 Vertrag-/Signatur-/Rollen-/Budgettests |
+| Native Dienste / Speicher | 28 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Verbindungslimits/Timeouts und Dateispeicherhärtung |
 | Sperrkurzbefehl | 4 Mock-Tests; öffentlicher Control–Command–Q-Adapter, Berechtigungs-/Sitzungsprüfung und Tastaturlayout-Auflösung |
 | Hardware-Probe | 8 Tests; passive Diagnose, bereinigte Reports, keine echten Aktionen |
 | App und eingebettete Helfer | Debug-/Release-Builds; Selbstdiagnosen, Signatur- und Importprüfung; feste Launch-Definitionen |
 
-Die **118 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
+Die **127 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
 
 ## So ist der Killswitch vorgesehen
 
