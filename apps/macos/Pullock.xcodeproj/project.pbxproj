@@ -12,16 +12,20 @@
 		288EA8DB30F71F1C52D7C7A0 /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA36204CB84549140E541A0 /* PullockIPC */; };
 		35F5E41E66F7A857521DFC5C /* PullockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */; };
 		476D2A5B0FA23D4464F05287 /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = DCBC00CC87263C9EC0A043FC /* PullockIPC */; };
+		6623D965C7D2A2B1CA597763 /* PullockUSB in Frameworks */ = {isa = PBXBuildFile; productRef = 382516104E6B1A796F1D7AFB /* PullockUSB */; };
 		71A3DFA8E50967409A360485 /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4EFBF84C7BB28D96C5610D8 /* PullockCore */; };
 		888241C601C98150E2FEDE19 /* PullockSimulation in Frameworks */ = {isa = PBXBuildFile; productRef = 6F8822C2F49F691ECC276E79 /* PullockSimulation */; };
 		8B1C81E8403C05499E116897 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29EFFAF402F5717AC0F24C6 /* main.swift */; };
 		AEAC81D36086A7E9EF4B9D14 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84FD86A0E2BE2273324FA58 /* main.swift */; };
+		B3F6231332A2E44184311E61 /* USBInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32CD27AD16001692244F879E /* USBInspector.swift */; };
 		B43011FDF852BC87A71354CE /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = 05BD4A71CC18B76DAE4DFB02 /* PullockIPC */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		04628505D7935A932116F30C /* PullockDaemon */ = {isa = PBXFileReference; includeInIndex = 0; path = PullockDaemon; sourceTree = BUILT_PRODUCTS_DIR; };
 		0E95B7A6CBA29EB32C87117D /* PullockCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PullockCore; path = ../../packages/PullockCore; sourceTree = SOURCE_ROOT; };
+		1D5AD489468450C020E47DBD /* PullockUSB */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PullockUSB; path = ../../packages/PullockUSB; sourceTree = SOURCE_ROOT; };
+		32CD27AD16001692244F879E /* USBInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USBInspector.swift; sourceTree = "<group>"; };
 		4AC4586A7AA99AC476E8EC31 /* PullockIPC */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PullockIPC; path = ../../packages/PullockIPC; sourceTree = SOURCE_ROOT; };
 		8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullockApp.swift; sourceTree = "<group>"; };
 		A29EFFAF402F5717AC0F24C6 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -56,6 +60,7 @@
 				71A3DFA8E50967409A360485 /* PullockCore in Frameworks */,
 				888241C601C98150E2FEDE19 /* PullockSimulation in Frameworks */,
 				476D2A5B0FA23D4464F05287 /* PullockIPC in Frameworks */,
+				6623D965C7D2A2B1CA597763 /* PullockUSB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,6 +72,7 @@
 			children = (
 				0E95B7A6CBA29EB32C87117D /* PullockCore */,
 				4AC4586A7AA99AC476E8EC31 /* PullockIPC */,
+				1D5AD489468450C020E47DBD /* PullockUSB */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -112,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */,
+				32CD27AD16001692244F879E /* USBInspector.swift */,
 			);
 			path = PullockApp;
 			sourceTree = "<group>";
@@ -155,6 +162,7 @@
 				F4EFBF84C7BB28D96C5610D8 /* PullockCore */,
 				6F8822C2F49F691ECC276E79 /* PullockSimulation */,
 				DCBC00CC87263C9EC0A043FC /* PullockIPC */,
+				382516104E6B1A796F1D7AFB /* PullockUSB */,
 			);
 			productName = Pullock;
 			productReference = E7656AD06FD9823020028B9F /* Pullock.app */;
@@ -212,6 +220,7 @@
 			packageReferences = (
 				A58D86AD282BFED3B5C931A6 /* XCLocalSwiftPackageReference "../../packages/PullockCore" */,
 				DB23C8CBCFBF095D67520492 /* XCLocalSwiftPackageReference "../../packages/PullockIPC" */,
+				07083316090063DAE5E25067 /* XCLocalSwiftPackageReference "../../packages/PullockUSB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5257DC94BF95FAC66F6999F0 /* Products */;
@@ -247,6 +256,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				35F5E41E66F7A857521DFC5C /* PullockApp.swift in Sources */,
+				B3F6231332A2E44184311E61 /* USBInspector.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -357,7 +367,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.3.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -442,7 +452,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.3.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -522,6 +532,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		07083316090063DAE5E25067 /* XCLocalSwiftPackageReference "../../packages/PullockUSB" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../packages/PullockUSB;
+		};
 		A58D86AD282BFED3B5C931A6 /* XCLocalSwiftPackageReference "../../packages/PullockCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../packages/PullockCore;
@@ -540,6 +554,10 @@
 		27F7F5CA38123A799EE7E7EA /* PullockCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PullockCore;
+		};
+		382516104E6B1A796F1D7AFB /* PullockUSB */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockUSB;
 		};
 		6F8822C2F49F691ECC276E79 /* PullockSimulation */ = {
 			isa = XCSwiftPackageProductDependency;

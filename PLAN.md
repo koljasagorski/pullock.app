@@ -1,6 +1,6 @@
 # Pullock — Architektur und Umsetzungsplan
 
-Stand: 29. September 2026. Status: **M2 als sichere Entwicklungsbasis umgesetzt; fortlaufende sichere Weiterarbeit autorisiert. M1-Lock-/Identitäts-Gates bleiben offen.**
+Stand: 29. September 2026. Status: **M3-Softwareaufbau umgesetzt; reale Hardwarequalifikation und M1-Lock-/Identitäts-Gates bleiben offen. Fortlaufende sichere Weiterarbeit autorisiert.**
 
 Der Auftrag „starte den plan“ hat M1 freigegeben. Das native Diagnosewerkzeug unter `tools/hardware-harness` enthält ausschließlich Mock-Aktionen. Aktueller Nachweisstand: [M1-Bericht](docs/test-reports/M1.md), [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md). Der nachfolgende Auftrag „immer weiter“ autorisiert die sichere Weiterarbeit ohne organisatorischen Stopp an jeder Meilensteingrenze. [ADR 0002](docs/decisions/0002-safe-continuation.md) und [M2-Bericht](docs/test-reports/M2.md) dokumentieren die Umsetzung. Die folgenden Planungsannahmen bleiben historische Ausgangslage, soweit diese Fortschrittsnotizen sie aktualisieren.
 
@@ -11,7 +11,7 @@ Leitidee: **Key in. You’re safe. Key out. Mac locked.** Diese Formulierung ist
 
 ## 0. Auftrag, Ausgangslage und Entscheidungsregeln
 
-Dieses Dokument hält die abgeschlossene Planungsphase und die weiteren Meilensteine fest. M1 ist untersucht und M2 als ungefährliche Entwicklungsbasis umgesetzt. Die weitere sichere Implementierung ist inzwischen autorisiert; Live-Schutz- und Release-Nachweise bleiben erforderlich. M1 installiert keine Dienste, verändert keine Berechtigungen oder Geräte und führt keine realen Lock-/Shutdown-Aktionen aus.
+Dieses Dokument hält die abgeschlossene Planungsphase und die weiteren Meilensteine fest. M1 ist untersucht, M2 als ungefährliche Entwicklungsbasis und der M3-Softwareaufbau sind umgesetzt. Die weitere sichere Implementierung ist inzwischen autorisiert; Live-Schutz- und Release-Nachweise bleiben erforderlich. M1 installiert keine Dienste, verändert keine Berechtigungen oder Geräte und führt keine realen Lock-/Shutdown-Aktionen aus.
 
 Ergänzende Vorgaben: GitHub wird nach jedem überprüften, zusammenhängenden Arbeitsstand synchron gehalten. Die Website liegt im selben Repository und läuft auf **GitHub Pages**. Benötigte App-/Website-Grafiken werden im jeweiligen Meilenstein eigens erstellt, überprüft und mit ihren Quellen/Exporten versioniert.
 
@@ -682,4 +682,4 @@ Offizielle Primärquellen, am 29. September 2026 geprüft. Links stehen zusätzl
 | Website | [Next Static Exports](https://nextjs.org/docs/app/guides/static-exports), [Next Metadata](https://nextjs.org/docs/app/getting-started/metadata-and-og-images) | Statischer Build und SEO-Metadaten |
 | GitHub Pages | [Custom Workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [Custom Domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) | Veröffentlichung aus demselben Repo, Domainverwaltung außerhalb einer bloßen CNAME-Datei |
 
-**Aktueller Stand:** M1-Diagnose und M2-Entwicklungsbasis sind implementiert. Der Benutzer hat fortlaufende sichere Weiterarbeit autorisiert. 55 Tests und native Debug-/Release-Builds bestehen lokal. Der angeschlossene Key bietet weiterhin keine passive Seriennummer; ein qualifizierter Sperrweg und die Hardwarematrix bleiben offen. Nächster technischer Schritt ist M3; weder echte Aktionen noch ein Schutzrelease werden dadurch freigegeben. Nachweise: [M1](docs/test-reports/M1.md), [M2](docs/test-reports/M2.md).
+**Aktueller Stand:** M1-Diagnose, M2-Entwicklungsbasis und M3-Softwareaufbau sind implementiert. 70 Tests und native Debug-/Release-Builds bestehen lokal; der M2-CI-Lauf auf GitHub war erfolgreich. Die App zeigt passive USB-Diagnose und bezeichnete Simulationen. Der früher angeschlossene Key bot keine passive Seriennummer; im aktuellen M3-Durchlauf war kein Yubico-Gerät sichtbar. Hardwarequalifikation, Produktentscheidung zur Identität und ein qualifizierter Sperrweg bleiben offen. Der lokale Release-Packager bereitet App, Source und Prüfsummen vor; veröffentlicht wird erst die qualifizierte erste App. Nächster unabhängiger technischer Aufbau ist M4. Nachweise: [M1](docs/test-reports/M1.md), [M2](docs/test-reports/M2.md), [M3](docs/test-reports/M3.md), [Release-Vorbereitung](docs/release/README.md).

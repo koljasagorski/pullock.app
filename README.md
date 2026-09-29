@@ -6,7 +6,7 @@ Pullock soll einen bereits vorhandenen USB-Security-Key zum physischen Auslöser
 
 Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account und ohne Cloud-Abhängigkeit. Der erste Fokus liegt auf YubiKeys; die vorhandene FIDO2-, WebAuthn-, Passkey-, PIV-, OTP- und SSH-Nutzung soll beim Monitoring unbeeinträchtigt bleiben.
 
-> **Projektstatus: M2 — sichere Entwicklungsbasis implementiert.** Zustandskern, IPC-Verträge, eine native Simulations-App und Agent-/Daemon-Hüllen sind vorhanden. **55 Tests sowie Debug-/Release-Builds bestehen lokal.** Es gibt noch keinen Live-Schutz, Download oder Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates. Siehe [M2-Bericht](docs/test-reports/M2.md) und [Entwicklungsleitfaden](docs/development.md).
+> **Projektstatus: M3 — passive USB-Beobachtung und Enrollment-Prüfung implementiert.** Zustandskern, IPC-Verträge, eine native Diagnose-/Simulations-App und Agent-/Daemon-Hüllen sind vorhanden. **70 Tests sowie Debug-/Release-Builds bestehen lokal.** Es gibt noch keinen Live-Schutz, Download oder Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates. Siehe [M3-Bericht](docs/test-reports/M3.md) und [Entwicklungsleitfaden](docs/development.md).
 
 ## Inhalt
 
@@ -31,11 +31,11 @@ Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account u
 | Bereich | Stand |
 | --- | --- |
 | Architektur, Threat Model, Sicherheitsentscheidungen | In [PLAN.md](PLAN.md) ausgearbeitet; Start von M1 freigegeben |
-| Native macOS-App | Kompilierbare SwiftUI-Entwicklungs-App mit sechs bezeichneten Simulationen; produktive Oberfläche offen |
+| Native macOS-App | SwiftUI-Entwicklungs-App mit passiver Geräteansicht und sechs bezeichneten Simulationen; produktive Oberfläche offen |
 | Zustandskern / IPC-Vertrag | Swift-Packages mit 47 Tests; echte XPC-Authentisierung folgt in M4 |
 | Agent / Daemon | Kompilierbare Entwicklungshüllen, keine installierten Dienste |
-| Native CI | Sicherer Build-/Test-Workflow eingerichtet |
-| USB- und Geräteidentifikation | Native IOKit-Untersuchung implementiert; ein angeschlossener Key erkannt, passive Seriennummer fehlt; Hardwarequalifikation offen |
+| Native CI | Sicherer Build-/Test-Workflow; M2-Lauf auf GitHub erfolgreich |
+| USB- und Geräteidentifikation | Gemeinsamer IOKit-Watcher und strikte Enrollment-Prüfung; früher erkannter Key ohne passive Seriennummer; Hardwarequalifikation offen |
 | Sofortige Sitzungssperre | Öffentliche API-/SDK-Prüfung und ungefährlicher Preflight; tragfähiger Lock-/Bestätigungspfad weiterhin offen |
 | Privilegierter Shutdown | Systemweg bewertet, noch nicht implementiert oder praktisch getestet |
 | Marketing-Website | Geplant im selben Repository unter `apps/web` |
@@ -43,7 +43,7 @@ Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account u
 | Zieldomain | `pullock.app` |
 | Download / Release | Noch nicht verfügbar |
 
-Die Produktfunktionen dieser README sind weiterhin geplant. Implementiert sind die M1-Untersuchung und die sichere M2-Entwicklungsbasis. Der Auftrag „immer weiter“ erlaubt die weitere sichere Implementierung; fachliche Schutz- und Release-Gates bleiben bestehen. [PLAN.md](PLAN.md) enthält Architektur und Abnahmekriterien; [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md) und [Testbericht](docs/test-reports/M1.md) halten den tatsächlichen Nachweisstand fest.
+Die Produktfunktionen dieser README sind weiterhin geplant. Implementiert sind die M1-Untersuchung, die sichere M2-Entwicklungsbasis und der M3-Softwareaufbau. Die reale M3-Hardwarequalifikation steht noch aus. Der Auftrag „immer weiter“ erlaubt die weitere sichere Implementierung; fachliche Schutz- und Release-Gates bleiben bestehen. [PLAN.md](PLAN.md) enthält Architektur und Abnahmekriterien; [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md) und [Testbericht](docs/test-reports/M1.md) halten den tatsächlichen Nachweisstand fest.
 
 ## Produktidee
 
@@ -304,6 +304,8 @@ Nach jedem Meilenstein werden Build, passende Tests, Fehlerbehebung, geänderte 
 Die native App soll direkt verteilt werden: Developer-ID-signiert, mit Hardened Runtime und Apple-Notarisierung. Ein signiertes Paket mit konsistentem Installationsort wird bevorzugt. Die Systemdienste benötigen die vorgesehene macOS-Freigabe; ihre bloße Registrierung reicht nicht als Health-Nachweis.
 
 Versionierte Installationspakete, Prüfsummen, Source-Material und Release Notes sollen über GitHub Releases verfügbar sein. Zum MVP sind manuelle Updates vorgesehen. Ein Update beendet die bisherige Schutzsession kontrolliert und verlangt nach erneuter Prüfung bewusstes Arming.
+
+Die erste fertige App soll gemäß Nutzerauftrag als GitHub Release veröffentlicht werden. Die [Release-Vorbereitung](docs/release/README.md) enthält einen lokalen Packager für App, Source und Prüfsummen sowie den tatsächlichen Stand der offenen Bedingungen.
 
 Es gibt noch keinen Installer. Anleitungen zum Deaktivieren von Gatekeeper oder Herabsetzen der macOS-Sicherheit sind kein vorgesehener Installationsweg.
 

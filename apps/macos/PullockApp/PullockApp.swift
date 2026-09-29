@@ -2,12 +2,29 @@ import Foundation
 import PullockCore
 import PullockIPC
 import PullockSimulation
+import PullockUSB
 import SwiftUI
 
 @main
 @MainActor
 enum DevelopmentEntry {
     static func main() {
+        if CommandLine.arguments.contains("--usb-inspect") {
+            let watcher = USBWatcher { _ in }
+            defer { watcher.stop() }
+            do {
+                try watcher.start()
+                let redactor = ReportRedactor()
+                let report: [String: Any] = ["component": "app", "realActions": 0, "protection": "unavailable",
+                    "watcherReady": watcher.ready, "devices": watcher.inventory.map { $0.reportFields(using: redactor) }]
+                let data = try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])
+                print(String(decoding: data, as: UTF8.self))
+            } catch {
+                print("{\"component\":\"app\",\"inspection\":\"failed\",\"realActions\":0}")
+                Foundation.exit(1)
+            }
+            return
+        }
         if CommandLine.arguments.contains("--self-check") {
             do {
                 for scenario in SimulationScenario.allCases {
@@ -31,12 +48,17 @@ enum DevelopmentEntry {
 
 struct PullockDevelopmentApp: App {
     var body: some Scene {
+        WindowGroup("Pullock Development · USB", id: "devices") {
+            USBInspectorView().frame(minWidth: 820, minHeight: 560)
+        }
+        .defaultSize(width: 980, height: 680)
         WindowGroup("Pullock Development", id: "simulation") {
             SimulationView()
                 .frame(minWidth: 820, minHeight: 560)
         }
         .defaultSize(width: 980, height: 680)
-        MenuBarExtra("Pullock · Simulation", systemImage: "lock.slash") {
+        .defaultLaunchBehavior(.suppressed)
+        MenuBarExtra("Pullock · No protection", systemImage: "lock.slash") {
             DevelopmentMenu()
         }
     }
@@ -45,8 +67,9 @@ struct PullockDevelopmentApp: App {
 private struct DevelopmentMenu: View {
     @Environment(\.openWindow) private var openWindow
     var body: some View {
-        Text("SIMULATION · No protection")
-        Button("Open development window") { openWindow(id: "simulation") }
+        Text("DEVELOPMENT · No protection")
+        Button("Connected security keys") { openWindow(id: "devices") }
+        Button("Open simulations") { openWindow(id: "simulation") }
         Divider()
         Button("Quit Pullock Development") { NSApplication.shared.terminate(nil) }
     }

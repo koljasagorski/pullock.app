@@ -1,3 +1,4 @@
+import PullockUSB
 import Foundation
 import Testing
 @testable import ProbeSupport
