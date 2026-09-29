@@ -13,6 +13,11 @@ binaries = {
     "sessionAgent": products / "PullockSessionAgent",
     "daemon": products / "PullockDaemon",
 }
+identifiers = {
+    "app": "app.pullock.development",
+    "sessionAgent": "app.pullock.session-agent.development",
+    "daemon": "app.pullock.daemon.development",
+}
 forbidden = {
     "_SACLockScreenImmediate",
     "_IOCreatePlugInInterfaceForService", "_posix_spawn", "_posix_spawnp",
@@ -38,7 +43,10 @@ for component, binary in binaries.items():
     if component == "daemon":
         assert not (imports & {"_CGEventPost", "_CGRequestPostEventAccess"}), "The root daemon must not post input"
     subprocess.run(["codesign", "--verify", "--strict", str(binary)], check=True, capture_output=True, timeout=10)
-    print(f"PASS {component}: self-check, code signature, direct symbol audit")
+    signature = subprocess.run(["codesign", "--display", "--verbose=4", str(binary)],
+                               check=True, capture_output=True, text=True, timeout=10).stderr
+    assert f"Identifier={identifiers[component]}\n" in signature, f"{component}: signing identifier must match XPC trust"
+    print(f"PASS {component}: self-check, code signature, XPC signing identifier, direct symbol audit")
 
 app = products / "PullockDevelopment.app"
 app_info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
@@ -48,7 +56,8 @@ assert (app / "Contents/Resources/Assets.car").is_file()
 print("PASS app branding: AppIcon declaration, ICNS and asset catalog embedded")
 for executable in ["PullockSessionAgent", "PullockDaemon"]:
     embedded = app / "Contents/Library/LaunchServices" / executable
-    assert hashlib.sha256(embedded.read_bytes()).digest() == hashlib.sha256((products / executable).read_bytes()).digest()
+    assert hashlib.sha256(embedded.read_bytes()).digest() == hashlib.sha256((products / executable).read_bytes()).digest(), \
+        f"{executable}: embedding changed the already signed helper; preserve its exact XPC identity"
     subprocess.run(["codesign", "--verify", "--strict", str(embedded)], check=True, capture_output=True)
 for directory, label, executable, argument in [
     ("LaunchDaemons", "app.pullock.daemon.development", "PullockDaemon", "--serve-health"),

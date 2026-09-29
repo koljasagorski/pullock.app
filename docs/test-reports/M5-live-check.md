@@ -1,6 +1,6 @@
 # M5 — Abnahme des installierten Sperrtests
 
-Vorbereiteter Stand: **0.4.1, Build 3, IPC-Protokoll 3**. Die nachstehenden realen Prüfungen sind **noch nicht durchgeführt**. Die 179 automatischen Tests ersetzen sie nicht. Kein Schritt dieses Dokuments wird von CI ausgeführt.
+Vorbereiteter Stand: **0.4.1, Build 4, IPC-Protokoll 3**. Die nachstehenden realen Prüfungen sind **noch nicht durchgeführt**. Die 179 automatischen Tests ersetzen sie nicht. Kein Schritt dieses Dokuments wird von CI ausgeführt.
 
 ## Installation und Einrichtung
 

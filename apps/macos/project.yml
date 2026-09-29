@@ -25,7 +25,7 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
     ENABLE_USER_SCRIPT_SANDBOXING: YES
-    CURRENT_PROJECT_VERSION: 3
+    CURRENT_PROJECT_VERSION: 4
     MARKETING_VERSION: 0.4.1
 targets:
   Pullock:
@@ -55,14 +55,16 @@ targets:
       - target: PullockDaemon
         link: false
         embed: true
-        codeSign: true
+        # Helpers are signed by their own targets with exact XPC identifiers.
+        # Re-signing a command-line tool during embedding can replace its ID.
+        codeSign: false
         copy:
           destination: wrapper
           subpath: Contents/Library/LaunchServices
       - target: PullockSessionAgent
         link: false
         embed: true
-        codeSign: true
+        codeSign: false
         copy:
           destination: wrapper
           subpath: Contents/Library/LaunchServices
@@ -88,6 +90,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.pullock.session-agent.development
+        OTHER_CODE_SIGN_FLAGS: "--identifier $(PRODUCT_BUNDLE_IDENTIFIER)"
         SKIP_INSTALL: YES
   PullockDaemon:
     type: tool
@@ -101,6 +104,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.pullock.daemon.development
+        OTHER_CODE_SIGN_FLAGS: "--identifier $(PRODUCT_BUNDLE_IDENTIFIER)"
         SKIP_INSTALL: YES
 schemes:
   PullockDevelopment:

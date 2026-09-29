@@ -52,6 +52,8 @@ python3 tools/release/archive-development.py \
 
 `PULLOCK_VALIDATION_ROOT` muss auf das tatsächlich geprüfte Verzeichnis zeigen. Der Helfer wählt ein vorhandenes Developer-ID-Application-Zertifikat, andernfalls Apple Development; bei mehrdeutigen Identitäten bricht er ab. Er signiert einen kopierten Probe-Binary zur Ermittlung der Team-ID, **führt ihn aber nicht aus**. Logs und Exportoptionen bleiben privat im Ausgabeverzeichnis; keine Passwörter, privaten Schlüssel oder Zertifikatsexporte werden benötigt.
 
+Tool-Targets erhalten ihre festen XPC-Kennungen über `OTHER_CODE_SIGN_FLAGS`. Die App kopiert die bereits signierten Helfer ohne erneutes Signieren; `check_binaries.py` vergleicht Kennungen und exakte Bytes. Der Archivhelfer prüft anschließend für App und Helfer dieselbe Zertifikat-/Identifier-Anforderung wie die authentifizierte Dienstverbindung. Ein lediglich gültiges, aber anders bezeichnetes Binary besteht diese Prüfung nicht.
+
 Optional `--export-developer-id` erlaubt Xcode, den Developer-ID-Export über den in Xcode eingerichteten Account vorzubereiten. Ein CLI-Fehler `No Accounts` beweist nicht, dass die Xcode-Oberfläche abgemeldet ist. Bei bestätigtem Team dieselbe Xcode-Installation und denselben macOS-Benutzer prüfen und das vorhandene Archiv direkt im Organizer verteilen. Keine Notarisierung, Installation, Service-Registrierung oder GitHub-Veröffentlichung durch diesen Befehl.
 
 ## Projekt und CI

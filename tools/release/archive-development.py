@@ -55,7 +55,19 @@ def main():
         raise SystemExit("Archive build failed; inspect the private archive.log locally")
     app = archive / "Products/Applications/PullockDevelopment.app"
     subprocess.run(["codesign", "--verify", "--strict", "--deep", str(app)], check=True, capture_output=True)
+    # Tool targets otherwise default to their executable names as identifiers.
+    # Test the exact certificate/identifier requirements used by XPC instead
+    # of merely checking that all three signatures are valid.
+    for path, identifier in [
+        (app, "app.pullock.development"),
+        (app / "Contents/Library/LaunchServices/PullockSessionAgent", "app.pullock.session-agent.development"),
+        (app / "Contents/Library/LaunchServices/PullockDaemon", "app.pullock.daemon.development"),
+    ]:
+        requirement = f'anchor apple generic and identifier "{identifier}" and certificate leaf = H"{identity}"'
+        subprocess.run(["codesign", "--verify", "--strict", "--test-requirement", requirement, str(path)],
+                       check=True, capture_output=True)
     print(f"Apple-signed local review archive: {archive}")
+    print("Exact XPC certificate and identifier requirements passed for app and both helpers.")
     print("Development build. Automatic protection and distribution are not qualified.")
     if not args.export_developer_id:
         return

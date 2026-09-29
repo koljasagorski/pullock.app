@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		02A0888BCA8A648DFB9B5CD6 /* LockTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE91C1F20D3EFBEBAF70BCF /* LockTestView.swift */; };
 		07F30B276F0FF9D436372E6E /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = B8083361055822B5A96CE28E /* PullockCore */; };
-		174C7CC46764BDC272FABA8A /* PullockDaemon in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = 04628505D7935A932116F30C /* PullockDaemon */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		174C7CC46764BDC272FABA8A /* PullockDaemon in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = 04628505D7935A932116F30C /* PullockDaemon */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1CA32B85610CFC5B96C775CF /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = 27F7F5CA38123A799EE7E7EA /* PullockCore */; };
 		224B2FAB7AD3827B5FD6529E /* PullockActions in Frameworks */ = {isa = PBXBuildFile; productRef = E0A141201E7E75AFBD5E78FD /* PullockActions */; };
 		27A6D45429B197A5575AF630 /* PullockDaemonRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 0DF6E870341E2532A5BE0D94 /* PullockDaemonRuntime */; };
@@ -25,7 +25,7 @@
 		87AB4581FBDE51D90641693E /* PullockActions in Frameworks */ = {isa = PBXBuildFile; productRef = 9987129170B4D7F82158EC3B /* PullockActions */; };
 		888241C601C98150E2FEDE19 /* PullockSimulation in Frameworks */ = {isa = PBXBuildFile; productRef = 6F8822C2F49F691ECC276E79 /* PullockSimulation */; };
 		8B1C81E8403C05499E116897 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29EFFAF402F5717AC0F24C6 /* main.swift */; };
-		96371E65C3E3925A83D29754 /* PullockSessionAgent in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = C789A7AC0063625E7497A89B /* PullockSessionAgent */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		96371E65C3E3925A83D29754 /* PullockSessionAgent in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = C789A7AC0063625E7497A89B /* PullockSessionAgent */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AEAC81D36086A7E9EF4B9D14 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84FD86A0E2BE2273324FA58 /* main.swift */; };
 		B3F6231332A2E44184311E61 /* USBInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32CD27AD16001692244F879E /* USBInspector.swift */; };
 		B43011FDF852BC87A71354CE /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = 05BD4A71CC18B76DAE4DFB02 /* PullockIPC */; };
@@ -56,10 +56,10 @@
 		8A47BAD3E8024B82DC639DAA /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = Contents/Library/LaunchDaemons;
+			dstPath = Contents/Library/LaunchAgents;
 			dstSubfolderSpec = 1;
 			files = (
-				F58E8A2271B467A9F5AA80D6 /* app.pullock.daemon.development.plist in CopyFiles */,
+				34C17AD4DF7E0581E3D132A6 /* app.pullock.session-agent.development.plist in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,10 +78,10 @@
 		C1125BA351E25C537E72BECC /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = Contents/Library/LaunchAgents;
+			dstPath = Contents/Library/LaunchDaemons;
 			dstSubfolderSpec = 1;
 			files = (
-				34C17AD4DF7E0581E3D132A6 /* app.pullock.session-agent.development.plist in CopyFiles */,
+				F58E8A2271B467A9F5AA80D6 /* app.pullock.daemon.development.plist in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,6 +429,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				OTHER_CODE_SIGN_FLAGS = "--identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = app.pullock.daemon.development;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -443,6 +444,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				OTHER_CODE_SIGN_FLAGS = "--identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = "app.pullock.session-agent.development";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -487,7 +489,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -579,7 +581,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -614,6 +616,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				OTHER_CODE_SIGN_FLAGS = "--identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = "app.pullock.session-agent.development";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -628,6 +631,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				OTHER_CODE_SIGN_FLAGS = "--identifier $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = app.pullock.daemon.development;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
