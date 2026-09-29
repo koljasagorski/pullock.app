@@ -1,0 +1,567 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07F30B276F0FF9D436372E6E /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = B8083361055822B5A96CE28E /* PullockCore */; };
+		1CA32B85610CFC5B96C775CF /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = 27F7F5CA38123A799EE7E7EA /* PullockCore */; };
+		288EA8DB30F71F1C52D7C7A0 /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA36204CB84549140E541A0 /* PullockIPC */; };
+		35F5E41E66F7A857521DFC5C /* PullockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */; };
+		476D2A5B0FA23D4464F05287 /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = DCBC00CC87263C9EC0A043FC /* PullockIPC */; };
+		71A3DFA8E50967409A360485 /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4EFBF84C7BB28D96C5610D8 /* PullockCore */; };
+		888241C601C98150E2FEDE19 /* PullockSimulation in Frameworks */ = {isa = PBXBuildFile; productRef = 6F8822C2F49F691ECC276E79 /* PullockSimulation */; };
+		8B1C81E8403C05499E116897 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29EFFAF402F5717AC0F24C6 /* main.swift */; };
+		AEAC81D36086A7E9EF4B9D14 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84FD86A0E2BE2273324FA58 /* main.swift */; };
+		B43011FDF852BC87A71354CE /* PullockIPC in Frameworks */ = {isa = PBXBuildFile; productRef = 05BD4A71CC18B76DAE4DFB02 /* PullockIPC */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		04628505D7935A932116F30C /* PullockDaemon */ = {isa = PBXFileReference; includeInIndex = 0; path = PullockDaemon; sourceTree = BUILT_PRODUCTS_DIR; };
+		0E95B7A6CBA29EB32C87117D /* PullockCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PullockCore; path = ../../packages/PullockCore; sourceTree = SOURCE_ROOT; };
+		4AC4586A7AA99AC476E8EC31 /* PullockIPC */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PullockIPC; path = ../../packages/PullockIPC; sourceTree = SOURCE_ROOT; };
+		8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullockApp.swift; sourceTree = "<group>"; };
+		A29EFFAF402F5717AC0F24C6 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		C789A7AC0063625E7497A89B /* PullockSessionAgent */ = {isa = PBXFileReference; includeInIndex = 0; path = PullockSessionAgent; sourceTree = BUILT_PRODUCTS_DIR; };
+		C84FD86A0E2BE2273324FA58 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		E7656AD06FD9823020028B9F /* Pullock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pullock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5BA6863EAE7537C86A2E5E8E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07F30B276F0FF9D436372E6E /* PullockCore in Frameworks */,
+				288EA8DB30F71F1C52D7C7A0 /* PullockIPC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFF431768649B5F6F2351C50 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1CA32B85610CFC5B96C775CF /* PullockCore in Frameworks */,
+				B43011FDF852BC87A71354CE /* PullockIPC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D42A8F6FE83C0A0FEB1A351D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				71A3DFA8E50967409A360485 /* PullockCore in Frameworks */,
+				888241C601C98150E2FEDE19 /* PullockSimulation in Frameworks */,
+				476D2A5B0FA23D4464F05287 /* PullockIPC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		31387DF6FFDFF67059B76949 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				0E95B7A6CBA29EB32C87117D /* PullockCore */,
+				4AC4586A7AA99AC476E8EC31 /* PullockIPC */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		32BADD80C972662C5C48C1B9 = {
+			isa = PBXGroup;
+			children = (
+				31387DF6FFDFF67059B76949 /* Packages */,
+				D1EAD86FBA7BA5EA9245F603 /* PullockApp */,
+				69156EFFC86B673CD4A4CEDE /* PullockDaemon */,
+				7AB337C822552D8E83CA67B2 /* PullockSessionAgent */,
+				5257DC94BF95FAC66F6999F0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5257DC94BF95FAC66F6999F0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E7656AD06FD9823020028B9F /* Pullock.app */,
+				04628505D7935A932116F30C /* PullockDaemon */,
+				C789A7AC0063625E7497A89B /* PullockSessionAgent */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		69156EFFC86B673CD4A4CEDE /* PullockDaemon */ = {
+			isa = PBXGroup;
+			children = (
+				C84FD86A0E2BE2273324FA58 /* main.swift */,
+			);
+			path = PullockDaemon;
+			sourceTree = "<group>";
+		};
+		7AB337C822552D8E83CA67B2 /* PullockSessionAgent */ = {
+			isa = PBXGroup;
+			children = (
+				A29EFFAF402F5717AC0F24C6 /* main.swift */,
+			);
+			path = PullockSessionAgent;
+			sourceTree = "<group>";
+		};
+		D1EAD86FBA7BA5EA9245F603 /* PullockApp */ = {
+			isa = PBXGroup;
+			children = (
+				8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */,
+			);
+			path = PullockApp;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		71A8C9C618318B0D987BE5E7 /* PullockSessionAgent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2902C9574C5BB4C4B50D2896 /* Build configuration list for PBXNativeTarget "PullockSessionAgent" */;
+			buildPhases = (
+				0EFBC00C4F3C9B4C2C740E2F /* Sources */,
+				5BA6863EAE7537C86A2E5E8E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PullockSessionAgent;
+			packageProductDependencies = (
+				B8083361055822B5A96CE28E /* PullockCore */,
+				9EA36204CB84549140E541A0 /* PullockIPC */,
+			);
+			productName = PullockSessionAgent;
+			productReference = C789A7AC0063625E7497A89B /* PullockSessionAgent */;
+			productType = "com.apple.product-type.tool";
+		};
+		79A7D4DAFF3A3A05B4F90629 /* Pullock */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2F08CA361F5A53A6D00085A4 /* Build configuration list for PBXNativeTarget "Pullock" */;
+			buildPhases = (
+				972571E97235403692FEB883 /* Sources */,
+				D42A8F6FE83C0A0FEB1A351D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Pullock;
+			packageProductDependencies = (
+				F4EFBF84C7BB28D96C5610D8 /* PullockCore */,
+				6F8822C2F49F691ECC276E79 /* PullockSimulation */,
+				DCBC00CC87263C9EC0A043FC /* PullockIPC */,
+			);
+			productName = Pullock;
+			productReference = E7656AD06FD9823020028B9F /* Pullock.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F3AD09A28EE18D8233DAB5DB /* PullockDaemon */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1E1DBBF51A8510E0B9FD728 /* Build configuration list for PBXNativeTarget "PullockDaemon" */;
+			buildPhases = (
+				7A391529AB7ACF5C0A772771 /* Sources */,
+				CFF431768649B5F6F2351C50 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PullockDaemon;
+			packageProductDependencies = (
+				27F7F5CA38123A799EE7E7EA /* PullockCore */,
+				05BD4A71CC18B76DAE4DFB02 /* PullockIPC */,
+			);
+			productName = PullockDaemon;
+			productReference = 04628505D7935A932116F30C /* PullockDaemon */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		661C80404CA9CDC936CE6C8B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					71A8C9C618318B0D987BE5E7 = {
+						ProvisioningStyle = Manual;
+					};
+					79A7D4DAFF3A3A05B4F90629 = {
+						ProvisioningStyle = Manual;
+					};
+					F3AD09A28EE18D8233DAB5DB = {
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = CBD911C20F63D5193106A2CE /* Build configuration list for PBXProject "Pullock" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 32BADD80C972662C5C48C1B9;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A58D86AD282BFED3B5C931A6 /* XCLocalSwiftPackageReference "../../packages/PullockCore" */,
+				DB23C8CBCFBF095D67520492 /* XCLocalSwiftPackageReference "../../packages/PullockIPC" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5257DC94BF95FAC66F6999F0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				79A7D4DAFF3A3A05B4F90629 /* Pullock */,
+				F3AD09A28EE18D8233DAB5DB /* PullockDaemon */,
+				71A8C9C618318B0D987BE5E7 /* PullockSessionAgent */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0EFBC00C4F3C9B4C2C740E2F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B1C81E8403C05499E116897 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A391529AB7ACF5C0A772771 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AEAC81D36086A7E9EF4B9D14 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		972571E97235403692FEB883 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35F5E41E66F7A857521DFC5C /* PullockApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2F83AFBDFA10492FFB16A1A0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pullock Development";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.pullock.development;
+				PRODUCT_NAME = PullockDevelopment;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		44CD1891627023A920504E23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.pullock.daemon.development;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		8C65893F068BC2C6A054F8C9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "app.pullock.session-agent.development";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		92B43961999AF8CEC6D2B26E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 0.2.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		948A3EA55B57E85E96BD5364 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pullock Development";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.pullock.development;
+				PRODUCT_NAME = PullockDevelopment;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DABE6BDB7535DFA9A4F4FB3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 0.2.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		DE1E32B8E8092CFB9F3FE7BD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "app.pullock.session-agent.development";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E14B348FDABC32BF36761426 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.pullock.daemon.development;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2902C9574C5BB4C4B50D2896 /* Build configuration list for PBXNativeTarget "PullockSessionAgent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DE1E32B8E8092CFB9F3FE7BD /* Debug */,
+				8C65893F068BC2C6A054F8C9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2F08CA361F5A53A6D00085A4 /* Build configuration list for PBXNativeTarget "Pullock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2F83AFBDFA10492FFB16A1A0 /* Debug */,
+				948A3EA55B57E85E96BD5364 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A1E1DBBF51A8510E0B9FD728 /* Build configuration list for PBXNativeTarget "PullockDaemon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44CD1891627023A920504E23 /* Debug */,
+				E14B348FDABC32BF36761426 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CBD911C20F63D5193106A2CE /* Build configuration list for PBXProject "Pullock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92B43961999AF8CEC6D2B26E /* Debug */,
+				DABE6BDB7535DFA9A4F4FB3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A58D86AD282BFED3B5C931A6 /* XCLocalSwiftPackageReference "../../packages/PullockCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../packages/PullockCore;
+		};
+		DB23C8CBCFBF095D67520492 /* XCLocalSwiftPackageReference "../../packages/PullockIPC" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../packages/PullockIPC;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		05BD4A71CC18B76DAE4DFB02 /* PullockIPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockIPC;
+		};
+		27F7F5CA38123A799EE7E7EA /* PullockCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockCore;
+		};
+		6F8822C2F49F691ECC276E79 /* PullockSimulation */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockSimulation;
+		};
+		9EA36204CB84549140E541A0 /* PullockIPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockIPC;
+		};
+		B8083361055822B5A96CE28E /* PullockCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockCore;
+		};
+		DCBC00CC87263C9EC0A043FC /* PullockIPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockIPC;
+		};
+		F4EFBF84C7BB28D96C5610D8 /* PullockCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 661C80404CA9CDC936CE6C8B /* Project object */;
+}

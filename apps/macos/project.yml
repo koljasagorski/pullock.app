@@ -1,0 +1,74 @@
+name: Pullock
+options:
+  minimumXcodeGenVersion: 2.45.0
+  deploymentTarget:
+    macOS: "27.0"
+packages:
+  PullockCore:
+    path: ../../packages/PullockCore
+  PullockIPC:
+    path: ../../packages/PullockIPC
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "27.0"
+    ARCHS: arm64
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.2.0
+targets:
+  Pullock:
+    type: application
+    platform: macOS
+    sources: [PullockApp]
+    dependencies:
+      - package: PullockCore
+        product: PullockCore
+      - package: PullockCore
+        product: PullockSimulation
+      - package: PullockIPC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.pullock.development
+        PRODUCT_NAME: PullockDevelopment
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Pullock Development
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+  PullockSessionAgent:
+    type: tool
+    platform: macOS
+    sources: [PullockSessionAgent]
+    dependencies:
+      - package: PullockCore
+      - package: PullockIPC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.pullock.session-agent.development
+  PullockDaemon:
+    type: tool
+    platform: macOS
+    sources: [PullockDaemon]
+    dependencies:
+      - package: PullockCore
+      - package: PullockIPC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.pullock.daemon.development
+schemes:
+  PullockDevelopment:
+    build:
+      targets:
+        Pullock: all
+        PullockSessionAgent: all
+        PullockDaemon: all
+    run:
+      config: Debug
+      executable: Pullock
+    archive:
+      config: Release

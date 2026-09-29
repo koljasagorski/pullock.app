@@ -1,0 +1,124 @@
+import Foundation
+import PullockCore
+import PullockIPC
+import PullockSimulation
+import SwiftUI
+
+@main
+@MainActor
+enum DevelopmentEntry {
+    static func main() {
+        if CommandLine.arguments.contains("--self-check") {
+            do {
+                for scenario in SimulationScenario.allCases {
+                    let steps = try SimulationRunner.run(scenario)
+                    guard !steps.isEmpty, steps.allSatisfy({ $0.snapshot.profile == .simulation }) else {
+                        throw SelfCheckFailure.invalidSimulation
+                    }
+                }
+                print("{\"component\":\"app\",\"simulationScenarios\":6,\"realActions\":0,\"protocolVersion\":\(WireEnvelope.currentVersion)}")
+            } catch {
+                print("{\"component\":\"app\",\"selfCheck\":\"failed\"}")
+                Foundation.exit(1)
+            }
+            return
+        }
+        PullockDevelopmentApp.main()
+    }
+
+    private enum SelfCheckFailure: Error { case invalidSimulation }
+}
+
+struct PullockDevelopmentApp: App {
+    var body: some Scene {
+        WindowGroup("Pullock Development", id: "simulation") {
+            SimulationView()
+                .frame(minWidth: 820, minHeight: 560)
+        }
+        .defaultSize(width: 980, height: 680)
+        MenuBarExtra("Pullock · Simulation", systemImage: "lock.slash") {
+            DevelopmentMenu()
+        }
+    }
+}
+
+private struct DevelopmentMenu: View {
+    @Environment(\.openWindow) private var openWindow
+    var body: some View {
+        Text("SIMULATION · No protection")
+        Button("Open development window") { openWindow(id: "simulation") }
+        Divider()
+        Button("Quit Pullock Development") { NSApplication.shared.terminate(nil) }
+    }
+}
+
+private struct SimulationView: View {
+    @State private var selected: SimulationScenario = .removal
+    @State private var steps: [SimulationStep] = []
+    @State private var failed = false
+
+    var body: some View {
+        NavigationSplitView {
+            List(SimulationScenario.allCases, selection: $selected) { scenario in
+                Text(scenario.title).tag(scenario)
+            }
+            .navigationTitle("Scenarios")
+            .navigationSplitViewColumnWidth(min: 220, ideal: 240)
+        } detail: {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("SIMULATION · NO PROTECTION")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(selected.title).font(.largeTitle.weight(.semibold))
+                    Text("Synthetic events exercise the real state reducer. This build cannot lock or shut down your Mac.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Divider()
+                if failed {
+                    ContentUnavailableView("Simulation failed", systemImage: "exclamationmark.triangle")
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                                HStack(alignment: .top, spacing: 14) {
+                                    Text(String(index + 1)).monospacedDigit().foregroundStyle(.secondary)
+                                        .frame(width: 18)
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text(step.label).font(.headline)
+                                        Text("SIMULATED \(step.snapshot.status.rawValue.uppercased())")
+                                            .font(.caption.monospaced())
+                                        ForEach(Array(step.actions.enumerated()), id: \.offset) { _, action in
+                                            Text("Would request \(action.id.kind.rawValue) · not executed")
+                                                .font(.callout).foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                Spacer(minLength: 0)
+                Divider()
+                HStack {
+                    Text("Live lock adapter and key enrollment are not qualified.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Run simulation", action: run).keyboardShortcut(.return)
+                }
+            }
+            .padding(28)
+        }
+        .onAppear(perform: run)
+        .onChange(of: selected) { run() }
+    }
+
+    private func run() {
+        do { steps = try SimulationRunner.run(selected); failed = false }
+        catch { steps = []; failed = true }
+    }
+}

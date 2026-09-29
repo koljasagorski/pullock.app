@@ -6,7 +6,7 @@ Pullock soll einen bereits vorhandenen USB-Security-Key zum physischen Auslöser
 
 Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account und ohne Cloud-Abhängigkeit. Der erste Fokus liegt auf YubiKeys; die vorhandene FIDO2-, WebAuthn-, Passkey-, PIV-, OTP- und SSH-Nutzung soll beim Monitoring unbeeinträchtigt bleiben.
 
-> **Projektstatus: M1 — Machbarkeitsuntersuchung gestartet.** Der Architekturplan ist für M1 freigegeben. Ein natives, kompilierbares [Diagnosewerkzeug](tools/hardware-harness/README.md) mit ausschließlich Mock-Aktionen ist vorhanden. Es gibt noch keine funktionsfähige Sicherheitsanwendung, keinen Download und keine implementierte Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates; siehe [M1-Bericht](docs/test-reports/M1.md).
+> **Projektstatus: M2 — sichere Entwicklungsbasis implementiert.** Zustandskern, IPC-Verträge, eine native Simulations-App und Agent-/Daemon-Hüllen sind vorhanden. **55 Tests sowie Debug-/Release-Builds bestehen lokal.** Es gibt noch keinen Live-Schutz, Download oder Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates. Siehe [M2-Bericht](docs/test-reports/M2.md) und [Entwicklungsleitfaden](docs/development.md).
 
 ## Inhalt
 
@@ -31,7 +31,10 @@ Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account u
 | Bereich | Stand |
 | --- | --- |
 | Architektur, Threat Model, Sicherheitsentscheidungen | In [PLAN.md](PLAN.md) ausgearbeitet; Start von M1 freigegeben |
-| Native macOS-App | Noch nicht implementiert |
+| Native macOS-App | Kompilierbare SwiftUI-Entwicklungs-App mit sechs bezeichneten Simulationen; produktive Oberfläche offen |
+| Zustandskern / IPC-Vertrag | Swift-Packages mit 47 Tests; echte XPC-Authentisierung folgt in M4 |
+| Agent / Daemon | Kompilierbare Entwicklungshüllen, keine installierten Dienste |
+| Native CI | Sicherer Build-/Test-Workflow eingerichtet |
 | USB- und Geräteidentifikation | Native IOKit-Untersuchung implementiert; ein angeschlossener Key erkannt, passive Seriennummer fehlt; Hardwarequalifikation offen |
 | Sofortige Sitzungssperre | Öffentliche API-/SDK-Prüfung und ungefährlicher Preflight; tragfähiger Lock-/Bestätigungspfad weiterhin offen |
 | Privilegierter Shutdown | Systemweg bewertet, noch nicht implementiert oder praktisch getestet |
@@ -40,7 +43,7 @@ Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account u
 | Zieldomain | `pullock.app` |
 | Download / Release | Noch nicht verfügbar |
 
-Die Produktfunktionen dieser README sind weiterhin geplant. Implementiert ist bislang ausschließlich die M1-Untersuchung. [PLAN.md](PLAN.md) enthält Architektur und Abnahmekriterien; [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md) und [Testbericht](docs/test-reports/M1.md) halten den tatsächlichen Nachweisstand fest.
+Die Produktfunktionen dieser README sind weiterhin geplant. Implementiert sind die M1-Untersuchung und die sichere M2-Entwicklungsbasis. Der Auftrag „immer weiter“ erlaubt die weitere sichere Implementierung; fachliche Schutz- und Release-Gates bleiben bestehen. [PLAN.md](PLAN.md) enthält Architektur und Abnahmekriterien; [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md) und [Testbericht](docs/test-reports/M1.md) halten den tatsächlichen Nachweisstand fest.
 
 ## Produktidee
 
@@ -219,8 +222,11 @@ Aktuell vorhanden:
 ├── LICENSE
 ├── PLAN.md
 ├── README.md
-├── docs/                 M1-Entscheidungen, Supportmatrix und Testbericht
-└── tools/hardware-harness/  Swift-Package mit nativer Diagnose und Mock-Tests
+├── docs/                 Entscheidungen, Supportmatrix und Testberichte
+├── packages/             PullockCore und PullockIPC
+├── apps/macos/           Xcode-Projekt und native Entwicklungs-Targets
+├── .github/workflows/    Native Build-/Test-Pipeline
+└── tools/                Hardware-Probe und gemeinsamer Prüfablauf
 ```
 
 Weitere geplante Aufteilung in den jeweiligen Meilensteinen:
@@ -250,7 +256,7 @@ swift test --package-path tools/hardware-harness --scratch-path "$PULLOCK_PROBE_
 swift run --package-path tools/hardware-harness --scratch-path "$PULLOCK_PROBE_BUILD" pullock-probe inspect
 ```
 
-Das temporäre Buildverzeichnis vermeidet Finder-/File-Provider-Metadaten, die lokal die Testbundle-Signierung im Projektordner gestört haben. Weitere Befehle und der harmlose USB-Test stehen in der [Werkzeuganleitung](tools/hardware-harness/README.md). Es gibt noch kein Produktions-Xcode-Projekt und kein Web-Package.
+Das temporäre Buildverzeichnis vermeidet Finder-/File-Provider-Metadaten, die lokal die Testbundle-Signierung im Projektordner gestört haben. Weitere Befehle und der harmlose USB-Test stehen in der [Werkzeuganleitung](tools/hardware-harness/README.md). Das [Xcode-Entwicklungsprojekt](apps/macos/Pullock.xcodeproj) und der [gemeinsame Prüfablauf](docs/development.md) ergänzen die Probe. Ein Produktionsrelease und ein Web-Package fehlen weiterhin.
 
 Geprüfte zusammenhängende Änderungen werden regelmäßig committed und zu GitHub gepusht. README und Plan bleiben dabei aktuell. Es gibt keine Force-Pushes zum Überschreiben fremder Änderungen. Ein Push von Dokumentation ersetzt weder eine Meilensteinfreigabe noch den Nachweis einer implementierten Funktion.
 
@@ -273,7 +279,7 @@ Latenzmessungen unterscheiden mechanisches Abziehen, OS-Event, Triggerentscheid,
 
 Diagnostics bleiben lokal. Ein bewusst exportierter Report soll Versionen, Health-Ursachen und bereinigte Ereignisse enthalten, jedoch keine Credentials, PINs oder unmaskierten Gerätekennungen. Es gibt keinen geplanten automatischen Upload.
 
-**M1: Acht Swift-Tests bestanden**, außerdem native CLI-/Lifecycle-Prüfungen und ein passiver Snapshot des angeschlossenen Keys. Die Tests betreffen die Diagnose, nicht eine fertige Schutzanwendung. Hardwarequalifikation, tatsächliche Sitzungssperre und Shutdown sind damit nicht nachgewiesen. Der [M1-Bericht](docs/test-reports/M1.md) enthält die ausgeführten Befehle, Befunde und offenen Prüfungen.
+**M1/M2: 55 Swift-Tests bestanden** (36 Kern-, 11 IPC-, 8 Probe-Tests), außerdem Debug-/Release-Builds, native Selbstprüfungen und die bereits dokumentierten passiven M1-Beobachtungen. Die Tests betreffen die Diagnose, nicht eine fertige Schutzanwendung. Hardwarequalifikation, tatsächliche Sitzungssperre und Shutdown sind damit nicht nachgewiesen. Die [M1-](docs/test-reports/M1.md) und [M2-Berichte](docs/test-reports/M2.md) enthalten ausgeführte Befehle, Befunde und offene Prüfungen.
 
 ## Roadmap
 
@@ -281,7 +287,7 @@ Diagnostics bleiben lokal. Ein bewusst exportierter Report soll Versionen, Healt
 | --- | --- | --- |
 | M0 | Architekturplan, ausführliche README, GitHub-Synchronisierung | Plan für den Start von M1 freigegeben |
 | M1 | Lock-, Identitäts-, USB-/Power-Machbarkeit | Diagnosewerkzeug und Tests vorhanden; Lock-/Identitäts-Gates offen |
-| M2 | Zustandskern und sichere Testbasis | Geplant |
+| M2 | Zustandskern und sichere Testbasis | Implementiert; 55 sichere Tests und native Builds lokal bestanden |
 | M3 | USB-Watcher und Enrollment | Geplant |
 | M4 | SMAppService, authentifiziertes XPC und Health | Geplant |
 | M5 | Qualifizierte Sitzungssperre | Geplant, Release-Gate |
@@ -291,7 +297,7 @@ Diagnostics bleiben lokal. Ein bewusst exportierter Report soll Versionen, Healt
 | M9 | Website, eigene Visuals und GitHub-Pages-Workflow | Geplant |
 | M10 | Signierte Distribution, GitHub Releases und Veröffentlichung | Geplant |
 
-Nach jedem Meilenstein werden Build, passende Tests, Fehlerbehebung, geänderte Dateien und verbleibende Risiken dokumentiert. Danach wartet die Arbeit auf die Freigabe des nächsten Meilensteins. Details und konkrete Abnahmekriterien stehen in [PLAN.md](PLAN.md).
+Nach jedem Meilenstein werden Build, passende Tests, Fehlerbehebung, geänderte Dateien und verbleibende Risiken dokumentiert. Der anschließende Auftrag „immer weiter“ autorisiert die fortlaufende sichere Implementierung; echte Systemaktionen und Release-/Schutzfreigaben behalten ihre eigenen Voraussetzungen. Details und konkrete Abnahmekriterien stehen in [PLAN.md](PLAN.md).
 
 ## Distribution
 

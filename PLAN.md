@@ -1,15 +1,17 @@
 # Pullock — Architektur und Umsetzungsplan
 
-Stand: 29. September 2026. Status: **M1 gestartet und untersucht; Lock-/Identitäts-Gates offen. M2 ist nicht freigegeben.**
+Stand: 29. September 2026. Status: **M2 als sichere Entwicklungsbasis umgesetzt; fortlaufende sichere Weiterarbeit autorisiert. M1-Lock-/Identitäts-Gates bleiben offen.**
 
-Der Auftrag „starte den plan“ hat M1 freigegeben. Das native Diagnosewerkzeug unter `tools/hardware-harness` enthält ausschließlich Mock-Aktionen. Aktueller Nachweisstand: [M1-Bericht](docs/test-reports/M1.md), [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md). Die folgenden Planungsannahmen bleiben historische Ausgangslage, soweit diese Fortschrittsnotiz sie aktualisiert.
+Der Auftrag „starte den plan“ hat M1 freigegeben. Das native Diagnosewerkzeug unter `tools/hardware-harness` enthält ausschließlich Mock-Aktionen. Aktueller Nachweisstand: [M1-Bericht](docs/test-reports/M1.md), [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md). Der nachfolgende Auftrag „immer weiter“ autorisiert die sichere Weiterarbeit ohne organisatorischen Stopp an jeder Meilensteingrenze. [ADR 0002](docs/decisions/0002-safe-continuation.md) und [M2-Bericht](docs/test-reports/M2.md) dokumentieren die Umsetzung. Die folgenden Planungsannahmen bleiben historische Ausgangslage, soweit diese Fortschrittsnotizen sie aktualisieren.
+
+Zusätzlicher Auftrag: Sobald die erste nutzbare App ihre Build-, Sicherheits- und Distributionsprüfungen besteht, soll sie als GitHub Release mit Installationsartefakt, Prüfsumme und Release Notes veröffentlicht werden. Die Veröffentlichung ist damit bedingt autorisiert; eine erneute organisatorische Freigabe ist dann nicht nötig. Die reine Simulationsfassung ist kein fertiger Schutz-Release.
 
 Produkt: native macOS Menu-Bar-App und Marketing-Website unter `pullock.app`.
 Leitidee: **Key in. You’re safe. Key out. Mac locked.** Diese Formulierung ist ein Produktziel, keine bereits nachgewiesene Sicherheitsgarantie.
 
 ## 0. Auftrag, Ausgangslage und Entscheidungsregeln
 
-Dieses Dokument hält die abgeschlossene Planungsphase und die weiteren Meilensteine fest. M1 ist inzwischen zur Untersuchung freigegeben; Produktionscode und App-/Website-Gerüste gehören zu späteren Freigaben. M1 installiert keine Dienste, verändert keine Berechtigungen oder Geräte und führt keine realen Lock-/Shutdown-Aktionen aus.
+Dieses Dokument hält die abgeschlossene Planungsphase und die weiteren Meilensteine fest. M1 ist untersucht und M2 als ungefährliche Entwicklungsbasis umgesetzt. Die weitere sichere Implementierung ist inzwischen autorisiert; Live-Schutz- und Release-Nachweise bleiben erforderlich. M1 installiert keine Dienste, verändert keine Berechtigungen oder Geräte und führt keine realen Lock-/Shutdown-Aktionen aus.
 
 Ergänzende Vorgaben: GitHub wird nach jedem überprüften, zusammenhängenden Arbeitsstand synchron gehalten. Die Website liegt im selben Repository und läuft auf **GitHub Pages**. Benötigte App-/Website-Grafiken werden im jeweiligen Meilenstein eigens erstellt, überprüft und mit ihren Quellen/Exporten versioniert.
 
@@ -588,7 +590,7 @@ MVP-Updates manuell über signiertes neues Paket; kein eigener Auto-Updater und 
 
 ## 16. Meilensteine und Freigaben
 
-Jeder Meilenstein endet mit: reproduzierbar kompilierbarem Stand, passenden tatsächlich ausgeführten Tests, behobenen gefundenen Fehlern, kurzer Ergebniszusammenfassung, Liste geänderter Dateien, Testnachweisen und verbleibenden Risiken. Fehlende Hardware-/Signierprüfungen werden als **nicht ausgeführt** ausgewiesen, nicht als bestanden. Danach ausdrücklich auf Freigabe des nächsten Meilensteins warten. Keine automatische Fortsetzung über diese Grenze.
+Jeder Meilenstein endet mit: reproduzierbar kompilierbarem Stand, passenden tatsächlich ausgeführten Tests, behobenen gefundenen Fehlern, kurzer Ergebniszusammenfassung, Liste geänderter Dateien, Testnachweisen und verbleibenden Risiken. Fehlende Hardware-/Signierprüfungen werden als **nicht ausgeführt** ausgewiesen, nicht als bestanden. Der ursprüngliche organisatorische Stopp nach jedem Meilenstein wurde durch den Benutzerauftrag „immer weiter“ für sichere Entwicklungsarbeit aufgehoben. Die folgenden fachlichen Freigabegrenzen bleiben Nachweispflichten für Live-Schutz, reale Systemaktionen und Veröffentlichung; sie werden nicht als bestanden ausgegeben, nur weil die Implementierung fortschreitet.
 
 GitHub wird fortlaufend aktuell gehalten: zusammenhängende geprüfte Änderungen mit präzisen Commits auf den vorgesehenen Remote-Branch pushen, Remote-Stand danach verifizieren und vorhandene CI-Ergebnisse kontrollieren. Kein Force-Push und keine fremden Änderungen überschreiben. `README.md` beschreibt immer den tatsächlichen Stand; `PLAN.md` hält freigegebene Architekturänderungen fest. Ein Dokumentations-Push startet keinen neuen Meilenstein. Nach Einrichtung der Pages-Pipeline veröffentlicht diese freigegebene Websiteänderungen aus `main` automatisch nach erfolgreichen Checks; bis dahin behauptet die README keine aktive Website.
 
@@ -680,4 +682,4 @@ Offizielle Primärquellen, am 29. September 2026 geprüft. Links stehen zusätzl
 | Website | [Next Static Exports](https://nextjs.org/docs/app/guides/static-exports), [Next Metadata](https://nextjs.org/docs/app/getting-started/metadata-and-og-images) | Statischer Build und SEO-Metadaten |
 | GitHub Pages | [Custom Workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [Custom Domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) | Veröffentlichung aus demselben Repo, Domainverwaltung außerhalb einer bloßen CNAME-Datei |
 
-**Aktueller Stand:** M1 ist gestartet; Diagnosewerkzeug, Build und Tests sind vorhanden. Der angeschlossene Yubico-Key bietet in den untersuchten passiven Eigenschaften keine Seriennummer. Ein tragfähiger Lock-/Bestätigungspfad und die Hardwarequalifikation bleiben offen. Vor M2 diese Gates lösen oder eine konkrete Scope-Änderung freigeben; keine automatische Fortsetzung. Nachweise stehen im [M1-Bericht](docs/test-reports/M1.md).
+**Aktueller Stand:** M1-Diagnose und M2-Entwicklungsbasis sind implementiert. Der Benutzer hat fortlaufende sichere Weiterarbeit autorisiert. 55 Tests und native Debug-/Release-Builds bestehen lokal. Der angeschlossene Key bietet weiterhin keine passive Seriennummer; ein qualifizierter Sperrweg und die Hardwarematrix bleiben offen. Nächster technischer Schritt ist M3; weder echte Aktionen noch ein Schutzrelease werden dadurch freigegeben. Nachweise: [M1](docs/test-reports/M1.md), [M2](docs/test-reports/M2.md).
