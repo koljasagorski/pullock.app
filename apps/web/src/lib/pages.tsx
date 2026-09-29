@@ -52,7 +52,7 @@ export const pages: Record<string, ContentPage> = {
     title: "An open record of progress.",
     description: "Current development work and the remaining steps toward the first protection release.",
     sections: [
-      { title: "Development 0.4.0", body: <p>The current native source has 142 automated tests across state handling, USB observation, IPC, services, the daemon runtime, the shortcut adapter and diagnostics. Debug and Release builds pass locally. These checks do not run real locks or install services.</p> },
+      { title: "Development 0.4.0", body: <p>The current native source has 147 automated tests across state handling, USB observation, IPC, services, the daemon runtime, the shortcut adapter and diagnostics. Debug and Release builds pass locally. These checks do not run real locks or install services.</p> },
       { title: "Brand and website", body: <p>The provided Pullock identity is integrated into the app icon, native header and this website. The website uses a static export, local fonts and no analytics integration. The browser demonstration never accesses hardware.</p> },
       { title: "Distribution evidence", body: <p>An earlier test archive passed Developer ID signing, Apple notarization, stapling and Gatekeeper assessment. That result does not qualify later source changes or demonstrate an operational killswitch.</p> },
       { title: "Still in progress", body: <p>The automatic daemon-to-agent action path, real hardware and session checks, final installation flow and distribution of the completed app remain open. <a href={`${repository}/blob/main/docs/test-reports/M4-M5.md`}>Read the native test report</a> or <a href={`${repository}/releases`}>check published releases</a>.</p> },

@@ -11,6 +11,7 @@ public struct ServiceSession: Sendable {
     public let bootID: UUID
     public let role: ProcessRole
     public private(set) var closed = false
+    public private(set) var lockDeliveryNonce: UUID?
     public var established: Bool { bootstrapped && wire.established && !closed }
     private var wire: WireSession
     private var bootstrapped = false
@@ -38,6 +39,13 @@ public struct ServiceSession: Sendable {
                 let response: WirePayload
                 switch payload {
                 case .hello: response = .hello(role: .daemon)
+                case let .enableLockDelivery(nonce):
+                    guard role == .sessionAgent, lockDeliveryNonce == nil,
+                          snapshot.bootID == bootID, snapshot.generatedAt <= now, now < snapshot.validUntil else {
+                        throw ServiceSessionError.wrongPhase
+                    }
+                    lockDeliveryNonce = nonce
+                    response = .snapshot(state: snapshot)
                 case .getHealth:
                     if let command {
                         // An authoritative host must be allowed to process the

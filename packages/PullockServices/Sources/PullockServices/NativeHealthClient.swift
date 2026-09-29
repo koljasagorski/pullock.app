@@ -15,8 +15,10 @@ public actor NativeHealthClient {
     private var sequence: UInt64 = 0
     private var busy = false
     private var closed = false
+    private let lockReceiver: NativeLockReceiver?
+    private let receiverToken: UUID?
 
-    public init(trust: ServiceTrust, clientRole: ProcessRole) throws {
+    public init(trust: ServiceTrust, clientRole: ProcessRole, lockReceiver: NativeLockReceiver? = nil) throws {
         guard trust.role == .daemon, clientRole != .daemon else { throw PeerPolicyError.invalidRole }
         let prefix = trust.development ? "app.pullock.daemon.development" : "app.pullock.daemon"
         let suffix = clientRole == .app ? "app" : "session-agent"
@@ -24,16 +26,42 @@ public actor NativeHealthClient {
         role = clientRole; expectedServerUID = 0
         connection.setCodeSigningRequirement(trust.requirement)
         connection.remoteObjectInterface = PullockXPCInterface.make()
+        self.lockReceiver = lockReceiver
+        receiverToken = try attachLockReceiver(lockReceiver, to: connection, role: clientRole, expectedUID: 0)
     }
 
-    init(testEndpoint: NSXPCListenerEndpoint, trust: ServiceTrust, clientRole: ProcessRole, expectedUID: UInt32) {
+    init(testEndpoint: NSXPCListenerEndpoint, trust: ServiceTrust, clientRole: ProcessRole, expectedUID: UInt32,
+         lockReceiver: NativeLockReceiver? = nil) throws {
         connection = NSXPCConnection(listenerEndpoint: testEndpoint)
         role = clientRole; expectedServerUID = expectedUID
         connection.setCodeSigningRequirement(trust.requirement)
         connection.remoteObjectInterface = PullockXPCInterface.make()
+        self.lockReceiver = lockReceiver
+        receiverToken = try attachLockReceiver(lockReceiver, to: connection, role: clientRole, expectedUID: expectedUID)
     }
 
-    isolated deinit { connection.invalidate() }
+    isolated deinit {
+        if let receiverToken { lockReceiver?.detach(token: receiverToken) }
+        connection.invalidate()
+    }
+
+    /// Explicitly enables the authenticated reverse stream after bootstrap.
+    /// This does not arm a policy, request permission or perform an action.
+    public func enableLockDelivery() async throws -> StateSnapshot {
+        guard role == .sessionAgent, let lockReceiver, let receiverToken,
+              let wire, !closed else { throw LockTransportError.unavailable }
+        guard !busy else { throw HealthClientError.busy }
+        busy = true
+        do {
+            let nonce = UUID()
+            try await lockReceiver.bind(token: receiverToken, nonce: nonce, boot: wire.bootID)
+            busy = false
+            guard case let .snapshot(snapshot) = try await request(.enableLockDelivery(nonce: nonce)) else {
+                throw HealthClientError.invalidReply
+            }
+            return snapshot
+        } catch { busy = false; close(); throw error }
+    }
 
     public func connect() async throws {
         guard !closed, wire == nil else { throw HealthClientError.disconnected }
@@ -86,6 +114,7 @@ public actor NativeHealthClient {
 
     public func close() {
         closed = true; wire = nil
+        if let receiverToken { lockReceiver?.detach(token: receiverToken) }
         connection.invalidate()
     }
 
@@ -113,6 +142,18 @@ public actor NativeHealthClient {
             }
         }
     }
+}
+
+private func attachLockReceiver(_ receiver: NativeLockReceiver?, to connection: NSXPCConnection,
+                                role: ProcessRole, expectedUID: UInt32) throws -> UUID? {
+    guard let receiver else { return nil }
+    guard role == .sessionAgent else { throw PeerPolicyError.invalidRole }
+    let token = try receiver.attach(connection, expectedUID: expectedUID)
+    connection.exportedInterface = PullockLockInterface.make()
+    connection.exportedObject = receiver
+    connection.invalidationHandler = { [weak receiver] in receiver?.detach(token: token) }
+    connection.interruptionHandler = { [weak receiver] in receiver?.detach(token: token) }
+    return token
 }
 
 /// NSXPC's receive-side credential getter and invalidation are used from its

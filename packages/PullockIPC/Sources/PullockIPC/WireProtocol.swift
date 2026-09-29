@@ -13,6 +13,7 @@ public enum WirePayload: Equatable, Codable, Sendable {
     case disarm(expectedArming: UInt64)
     case resetTrigger(id: TriggerID)
     case sessionHeartbeat(generation: UInt64, progress: UInt64)
+    case enableLockDelivery(nonce: UUID)
     case lockResult(result: ActionResult)
     case performLock(id: ActionID)
     case snapshot(state: StateSnapshot)
@@ -83,6 +84,7 @@ public enum WireCodec {
             "hello": ["role"], "getHealth": [], "getDevices": [], "devices": ["inventory", "state"], "configure": ["policy", "expectedRevision"],
             "arm": ["expectedRevision"], "disarm": ["expectedArming"], "resetTrigger": ["id"],
             "sessionHeartbeat": ["generation", "progress"], "lockResult": ["result"],
+            "enableLockDelivery": ["nonce"],
             "performLock": ["id"], "snapshot": ["state"],
         ]
         guard let allowed = shapes[entry.key], Set(fields.keys).isSubset(of: allowed) else {
@@ -172,7 +174,7 @@ public struct WireSession: Sendable {
         case .getDevices: localRole == .daemon && remoteRole == .app
         case .devices: localRole == .app && remoteRole == .daemon
         case .configure, .arm, .disarm, .resetTrigger: localRole == .daemon && remoteRole == .app
-        case .sessionHeartbeat, .lockResult: localRole == .daemon && remoteRole == .sessionAgent
+        case .sessionHeartbeat, .lockResult, .enableLockDelivery: localRole == .daemon && remoteRole == .sessionAgent
         case .performLock: localRole == .sessionAgent && remoteRole == .daemon
         case .snapshot: remoteRole == .daemon && (localRole == .app || localRole == .sessionAgent)
         }
@@ -201,7 +203,7 @@ public struct WireSession: Sendable {
             guard inventory.count <= 128, inventory.allSatisfy(\.valid),
                   Set(inventory.map(\.instance)).count == inventory.count else { throw WireError.invalidPayload }
             try validateSnapshot(state, now: now)
-        case .hello, .getHealth, .getDevices, .disarm: break
+        case .hello, .getHealth, .getDevices, .disarm, .enableLockDelivery: break
         }
     }
 

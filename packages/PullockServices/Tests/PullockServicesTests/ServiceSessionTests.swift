@@ -85,3 +85,24 @@ private func snapshot(_ boot: UUID, at now: UInt64 = 0) throws -> StateSnapshot 
     let next = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 3, payload: .getHealth)
     #expect(throws: WireError.staleSnapshot) { try session.receive(WireCodec.encode(next), now: 4_001, snapshot: old) }
 }
+
+@Test func reverseStreamRequiresAgentRoleAndCannotReplaceItsNonce() throws {
+    let boot = UUID(), nonce = UUID()
+    for role in [ProcessRole.app, .sessionAgent] {
+        var session = try ServiceSession(bootID: boot, role: role)
+        _ = try session.receive(BootstrapCodec.encode(BootstrapRequest()), now: 0, snapshot: snapshot(boot))
+        let hello = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 1, payload: .hello(role: role))
+        _ = try session.receive(WireCodec.encode(hello), now: 0, snapshot: snapshot(boot))
+        let enable = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 2, payload: .enableLockDelivery(nonce: nonce))
+        if role == .app {
+            #expect(throws: WireError.roleViolation) { try session.receive(WireCodec.encode(enable), now: 1, snapshot: snapshot(boot, at: 1)) }
+            #expect(session.lockDeliveryNonce == nil && session.closed)
+        } else {
+            _ = try session.receive(WireCodec.encode(enable), now: 1, snapshot: snapshot(boot, at: 1))
+            #expect(session.lockDeliveryNonce == nonce)
+            let replacement = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 3, payload: .enableLockDelivery(nonce: UUID()))
+            #expect(throws: ServiceSessionError.wrongPhase) { try session.receive(WireCodec.encode(replacement), now: 2, snapshot: snapshot(boot, at: 2)) }
+            #expect(session.closed)
+        }
+    }
+}

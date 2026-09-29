@@ -10,7 +10,7 @@ Apple Silicon, macOS 27.x, Xcode 27 / Swift 6.4. Projektgenerierung: XcodeGen 2.
 bash tools/validation/check.sh
 ```
 
-142 Tests über Core, USB, IPC, Services einschließlich DaemonRuntime, Actions und Probe, anschließend Debug-/Release-Builds der drei Targets. Selbstdiagnose, Signaturen, eingebettete Helper/Launch-Pfade und direkte Imports werden geprüft. Der echte öffentliche Eingabeadapter ist nur im App-Target für den manuellen UI-Test erlaubt; private Sperr- und Shutdown-Funktionen bleiben ausgeschlossen. Eine Importprüfung ist kein vollständiger Sicherheitsbeweis.
+147 Tests über Core, USB, IPC, Services einschließlich DaemonRuntime, Actions und Probe, anschließend Debug-/Release-Builds der drei Targets. Selbstdiagnose, Signaturen, eingebettete Helper/Launch-Pfade und direkte Imports werden geprüft. Der echte öffentliche Eingabeadapter ist nur im App-Target für den manuellen UI-Test erlaubt; private Sperr- und Shutdown-Funktionen bleiben ausgeschlossen. Eine Importprüfung ist kein vollständiger Sicherheitsbeweis.
 
 Keine echten Eingaben, Berechtigungsdialoge, Dienste, Gerätebefehle oder Shutdowns im Testablauf. Anonyme lokale XPC-Verbindungen und temporäre Konfigurationsdateien sind Bestandteil der Tests. Das temporäre Buildverzeichnis vermeidet Finder-/File-Provider-Metadaten aus dem Projektpfad. Mit `PULLOCK_VALIDATION_ROOT` lässt es sich wiederverwenden.
 

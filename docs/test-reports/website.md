@@ -43,3 +43,12 @@ Website beteiligt sich nicht an der nativen Schutzkette.
 Echte automatische Schutzfunktion, finaler Installer und Domain-Umstellung
 sind getrennte, noch offene Arbeitspunkte. Ihre Fertigstellung wird nicht aus
 diesem Website-Nachweis abgeleitet.
+
+## Öffentliche Bereitstellung
+
+Die Website wurde über [CI 36614406143](https://github.com/koljasagorski/pullock.app/actions/runs/36614406143)
+aus Commit `8ecdbe509535c7c244697510e3dd220cd7f09073` veröffentlicht.
+Live geprüft unter <https://koljasagorski.github.io/pullock.app/>: Startseite und
+Impressum HTTP 200, aktuelle „Any compatible USB device“-Texte, geladenes Logo
+und Bilder, Demo und Rücksetzung, keine Browser-/Ressourcenfehler. Die Pages-
+Konfiguration verwendet Workflow-Deployment, kein CNAME und erzwungenes HTTPS.

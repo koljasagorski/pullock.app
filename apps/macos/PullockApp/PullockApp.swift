@@ -10,7 +10,7 @@ import SwiftUI
 enum DevelopmentEntry {
     static func main() {
         if CommandLine.arguments.contains("--usb-inspect") {
-            let watcher = USBWatcher { _ in }
+            let watcher = USBWatcher(scope: .allDevices) { _ in }
             defer { watcher.stop() }
             do {
                 try watcher.start()
