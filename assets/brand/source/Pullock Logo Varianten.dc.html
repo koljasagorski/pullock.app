@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#d9d9d9;font-family:Poppins,sans-serif}a{color:#141414}a:hover{color:#000}</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="pkW" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"></stop><stop offset="1" stop-color="#cfcfcf"></stop></linearGradient>
+    <linearGradient id="pkU" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a3a3a"></stop><stop offset="1" stop-color="#1b1b1b"></stop></linearGradient>
+    <linearGradient id="pkD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2e2e2e"></stop><stop offset="1" stop-color="#0c0c0c"></stop></linearGradient>
+    <linearGradient id="pkL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f4f4f4"></stop><stop offset="1" stop-color="#d4d4d4"></stop></linearGradient>
+    <radialGradient id="pkG"><stop offset="0" stop-color="#8dff7a"></stop><stop offset="0.5" stop-color="#2fd62f"></stop><stop offset="1" stop-color="#2fd62f" stop-opacity="0"></stop></radialGradient>
+  </defs>
+</svg>
+<section style="display:flex;flex-direction:column;gap:32px;padding:64px">
+  <div style="font-size:20px;font-weight:600;color:#141414">Pullock – Hell / Dunkel, 1:1 (512 × 512)</div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;font-weight:600;color:#333">1a · Symbol dunkel</div>
+      <div data-screen-label="Symbol dunkel" style="width:512px;height:512px;background:#0e0e0e;display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 240 240" width="340" height="340">
+          <g transform="translate(170 132) rotate(42)"><rect x="-22" y="-14" width="44" height="100" rx="9" fill="url(#pkU)" stroke="#e8e8e8" stroke-width="4"></rect><rect x="-16" y="-52" width="32" height="40" rx="4" fill="url(#pkW)"></rect><rect x="-9" y="-42" width="7" height="7" fill="#1a1a1a"></rect><rect x="2" y="-42" width="7" height="7" fill="#1a1a1a"></rect></g>
+          <path d="M58 118 L58 72 A40 40 0 0 1 138 72 L138 94" fill="none" stroke="url(#pkW)" stroke-width="18" stroke-linecap="round"></path>
+          <g transform="rotate(-14 84 160)"><path d="M52 124 Q52 104 84 104 Q116 104 116 124 L106 194 Q102 216 84 216 Q66 216 62 194 Z" fill="url(#pkW)"></path></g>
+          
+        </svg>
+      </div>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;font-weight:600;color:#333">1b · Symbol hell</div>
+      <div data-screen-label="Symbol hell" style="width:512px;height:512px;background:#f4f4f4;display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 240 240" width="340" height="340">
+          <g transform="translate(170 132) rotate(42)"><rect x="-22" y="-14" width="44" height="100" rx="9" fill="url(#pkL)" stroke="#141414" stroke-width="4"></rect><rect x="-16" y="-52" width="32" height="40" rx="4" fill="url(#pkD)"></rect><rect x="-9" y="-42" width="7" height="7" fill="#f4f4f4"></rect><rect x="2" y="-42" width="7" height="7" fill="#f4f4f4"></rect></g>
+          <path d="M58 118 L58 72 A40 40 0 0 1 138 72 L138 94" fill="none" stroke="url(#pkD)" stroke-width="18" stroke-linecap="round"></path>
+          <g transform="rotate(-14 84 160)"><path d="M52 124 Q52 104 84 104 Q116 104 116 124 L106 194 Q102 216 84 216 Q66 216 62 194 Z" fill="url(#pkD)"></path></g>
+          
+        </svg>
+      </div>
+    </div>
+
+    <div id="1c" style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;font-weight:600;color:#333">1c · App-Icon dunkel</div>
+      <div data-screen-label="App-Icon dunkel" style="width:512px;height:512px;border-radius:114px;background:linear-gradient(160deg,#2a2a2a,#0e0e0e);display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 240 240" width="400" height="400">
+          <g transform="translate(170 132) rotate(42)"><rect x="-22" y="-14" width="44" height="100" rx="9" fill="url(#pkU)" stroke="#e8e8e8" stroke-width="4"></rect><rect x="-16" y="-52" width="32" height="40" rx="4" fill="url(#pkW)"></rect><rect x="-9" y="-42" width="7" height="7" fill="#1a1a1a"></rect><rect x="2" y="-42" width="7" height="7" fill="#1a1a1a"></rect></g>
+          <path d="M58 118 L58 72 A40 40 0 0 1 138 72 L138 94" fill="none" stroke="url(#pkW)" stroke-width="18" stroke-linecap="round"></path>
+          <g transform="rotate(-14 84 160)"><path d="M52 124 Q52 104 84 104 Q116 104 116 124 L106 194 Q102 216 84 216 Q66 216 62 194 Z" fill="url(#pkW)"></path></g>
+          
+        </svg>
+      </div>
+    </div>
+
+    <div id="1d" style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;font-weight:600;color:#333">1d · App-Icon hell</div>
+      <div data-screen-label="App-Icon hell" style="width:512px;height:512px;border-radius:114px;background:linear-gradient(160deg,#ffffff,#e6e6e6);display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 240 240" width="400" height="400">
+          <g transform="translate(170 132) rotate(42)"><rect x="-22" y="-14" width="44" height="100" rx="9" fill="url(#pkL)" stroke="#141414" stroke-width="4"></rect><rect x="-16" y="-52" width="32" height="40" rx="4" fill="url(#pkD)"></rect><rect x="-9" y="-42" width="7" height="7" fill="#f4f4f4"></rect><rect x="2" y="-42" width="7" height="7" fill="#f4f4f4"></rect></g>
+          <path d="M58 118 L58 72 A40 40 0 0 1 138 72 L138 94" fill="none" stroke="url(#pkD)" stroke-width="18" stroke-linecap="round"></path>
+          <g transform="rotate(-14 84 160)"><path d="M52 124 Q52 104 84 104 Q116 104 116 124 L106 194 Q102 216 84 216 Q66 216 62 194 Z" fill="url(#pkD)"></path></g>
+          
+        </svg>
+      </div>
+    </div>
+
+    <div id="1e" style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;font-weight:600;color:#333">1e · Logo + Text dunkel</div>
+      <div data-screen-label="Logo + Text dunkel" style="width:512px;height:512px;background:#0e0e0e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+        <svg viewBox="0 0 240 240" width="240" height="240">
+          <g transform="translate(170 132) rotate(42)"><rect x="-22" y="-14" width="44" height="100" rx="9" fill="url(#pkU)" stroke="#e8e8e8" stroke-width="4"></rect><rect x="-16" y="-52" width="32" height="40" rx="4" fill="url(#pkW)"></rect><rect x="-9" y="-42" width="7" height="7" fill="#1a1a1a"></rect><rect x="2" y="-42" width="7" height="7" fill="#1a1a1a"></rect></g>
+          <path d="M58 118 L58 72 A40 40 0 0 1 138 72 L138 94" fill="none" stroke="url(#pkW)" stroke-width="18" stroke-linecap="round"></path>
+          <g transform="rotate(-14 84 160)"><path d="M52 124 Q52 104 84 104 Q116 104 116 124 L106 194 Q102 216 84 216 Q66 216 62 194 Z" fill="url(#pkW)"></path></g>
+          
+        </svg>
+        <div style="font-weight:700;font-size:76px;line-height:1;letter-spacing:-1.5px;color:#f4f4f4">Pullock</div>
+        <div style="font-weight:300;font-size:24px;color:#e0e0e0">Pull the key. Lock the Device.</div>
+      </div>
+    </div>
+
+    <div id="1f" style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;font-weight:600;color:#333">1f · Logo + Text hell</div>
+      <div data-screen-label="Logo + Text hell" style="width:512px;height:512px;background:#f4f4f4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+        <svg viewBox="0 0 240 240" width="240" height="240">
+          <g transform="translate(170 132) rotate(42)"><rect x="-22" y="-14" width="44" height="100" rx="9" fill="url(#pkL)" stroke="#141414" stroke-width="4"></rect><rect x="-16" y="-52" width="32" height="40" rx="4" fill="url(#pkD)"></rect><rect x="-9" y="-42" width="7" height="7" fill="#f4f4f4"></rect><rect x="2" y="-42" width="7" height="7" fill="#f4f4f4"></rect></g>
+          <path d="M58 118 L58 72 A40 40 0 0 1 138 72 L138 94" fill="none" stroke="url(#pkD)" stroke-width="18" stroke-linecap="round"></path>
+          <g transform="rotate(-14 84 160)"><path d="M52 124 Q52 104 84 104 Q116 104 116 124 L106 194 Q102 216 84 216 Q66 216 62 194 Z" fill="url(#pkD)"></path></g>
+          
+        </svg>
+        <div style="font-weight:700;font-size:76px;line-height:1;letter-spacing:-1.5px;color:#141414">Pullock</div>
+        <div style="font-weight:400;font-size:24px;color:#444">Pull the key. Lock the Device.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+</body>
+</html>
