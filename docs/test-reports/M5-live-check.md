@@ -1,6 +1,6 @@
 # M5 — Abnahme des installierten Sperrtests
 
-Installierter Stand: **0.4.1, Build 4, IPC-Protokoll 3**. Exportprüfung, lokale Installation und App-Start sind bestanden. Die installierte Dienstkette und die nachstehenden realen Sperrprüfungen sind **noch nicht bestätigt**. Die 179 automatischen Tests ersetzen sie nicht. Kein Schritt dieses Dokuments wird von CI ausgeführt.
+Installierter Stand: **0.4.1, Build 4, IPC-Protokoll 3**. Exportprüfung, lokale Installation, App-Start und laufende Hintergrunddienste sind bestätigt. Die eigene Sperrbereitschaft des SessionAgent und die nachstehenden realen Sperrprüfungen sind **noch nicht bestätigt**. Die 179 automatischen Tests ersetzen sie nicht. Kein Schritt dieses Dokuments wird von CI ausgeführt.
 
 ## Bestätigter Export und lokaler Start
 
@@ -13,7 +13,13 @@ Geprüft auf Apple Silicon, **macOS 27.0.1 (26A434)** am vorhandenen Entwicklung
 - Die drei installierten Binaries bestehen `--self-check` mit Protokoll 3 und null Aktionen. Der anschließend geöffnete App-Prozess wurde am Installationspfad nachgewiesen.
 - Der installierte Daemon besteht die separate passive USB-/Power-/Sitzungsprüfung. Dabei waren null USB-Geräte sichtbar; es wurden weder ein Listener gestartet noch Aktionen ausgeführt.
 
-Dies belegt den lokalen Start, keine frische Systeminstallation und noch keinen erfolgreichen Hintergrunddienst-Handshake oder Sperrvorgang. Maschinenbezogene Prüfsummen und der lokale Prüfbeleg bleiben außerhalb von Git.
+Maschinenbezogene Prüfsummen und der lokale Prüfbeleg bleiben außerhalb von Git. Die Installation auf dem vorhandenen Entwicklungs-Mac ersetzt keine frische Systeminstallation.
+
+## Bestätigte Dienstregistrierung
+
+- Der Nutzer meldet in der App **Authenticated device connection** und nach erneuter Registrierung für den SessionAgent **Registered and approved**.
+- Unabhängig davon zeigt `launchctl` den Daemon im Systembereich und den SessionAgent in der GUI-Sitzung als registriert und laufend, jeweils mit einem Start und ohne vorherigen Exit. Die erste Prüfung hatte nur den Daemon bestätigt; erst nach dem zweiten Registrierungsschritt liefen beide Helfer.
+- Die App-Anzeige ist der Nutzerbericht zur authentifizierten Verbindung. Laufende Prozesse allein beweisen weder die Sperrbereitschaft des Agenten noch einen erfolgreichen Sperrvorgang; diese Prüfungen stehen noch aus.
 
 ## Installation und Einrichtung
 

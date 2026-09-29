@@ -22,11 +22,11 @@ Das Ergebnis heißt ausdrücklich `PullockDevelopment` und ist nur für die loka
 | --- | --- |
 | USB-Identität und reale Wiedererkennung | Nutzerentscheidung: beliebige aktuelle USB-Verbindung ohne Seriennummer auswählen; implementiert, reale Removal-Matrix offen |
 | Sitzungssperre und ehrliches Erfolgskriterium | Öffentlicher Control–Command–Q-Adapter in manuellem Test und Agent integriert; keine behauptete Sperrbestätigung, reale Tests offen |
-| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative Beobachtung/Auswahl, Policy-Store, Rückkanal, Lease-Watchdog und ausdrückliche Agent-Berechtigungseinrichtung; integrierte Mock-Kette bestanden. Build 4 korrigiert Helfer-Signierkennungen und prüft die exakten XPC-Anforderungen; installierte Prüfung offen |
+| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative Beobachtung/Auswahl, Policy-Store, Rückkanal, Lease-Watchdog und ausdrückliche Agent-Berechtigungseinrichtung; integrierte Mock-Kette bestanden. Build 4 korrigiert Helfer-Signierkennungen und prüft die exakten XPC-Anforderungen; beide installierten Helfer laufen, authentifizierte App-Verbindung vom Nutzer gemeldet; Agent-Sperrbereitschaft offen |
 | Power, Session, Koexistenz, Fehlerszenarien | Modelltests vorhanden; reale Matrix offen |
 | UI, Installation, Update und Uninstall | USB-Auswahl, Diagnose- und Sperrtestfenster; Produkt-/Installationsabnahme offen |
 | Developer ID Application / Installer | Bezahltes Team in Xcode bestätigt. Direkter Organizer-Export des Testarchivs erfolgreich; App und beide Helfer mit Developer ID Application signiert. Installer nur für ein späteres PKG erforderlich |
-| Notarisierung, Stapling, Gatekeeper, frisches Testsystem | Export von 0.4.1 Build 4 besteht Developer ID, exakte XPC-Anforderungen, Stapling und Gatekeeper vor/nach lokaler Installation. App-Start und installierte Selbsttests bestanden; Dienst-/Sperrtest und frisches Testsystem offen |
+| Notarisierung, Stapling, Gatekeeper, frisches Testsystem | Export von 0.4.1 Build 4 besteht Developer ID, exakte XPC-Anforderungen, Stapling und Gatekeeper vor/nach lokaler Installation. App-Start und installierte Selbsttests bestanden; beide Hintergrunddienste laufen; Agent-Sperrbereitschaft, Sperrtest und frisches Testsystem offen |
 | Privater Sicherheitsmeldeweg | Vor ausführbarem öffentlichem Release festlegen und verifizieren |
 
 Diese Tabelle ist ein Nachweisstand, keine automatische Freigabe durch umgesetzte boolesche Flags. Ein erfolgreicher Paket- oder CI-Build ersetzt die fehlenden Prüfungen nicht.
