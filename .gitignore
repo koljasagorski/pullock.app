@@ -1,0 +1,11 @@
+.DS_Store
+**/.build/
+**/.swiftpm/
+**/DerivedData/
+*.xcuserstate
+**/xcuserdata/
+# Local hardware traces and signing material never belong in Git.
+.local/
+*.p12
+*.mobileprovision
+*.provisionprofile

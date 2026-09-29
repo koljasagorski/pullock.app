@@ -1,13 +1,15 @@
 # Pullock — Architektur und Umsetzungsplan
 
-Stand: 29. September 2026. Status: **Plan zur Freigabe; keine Implementierung begonnen.**
+Stand: 29. September 2026. Status: **M1 gestartet und untersucht; Lock-/Identitäts-Gates offen. M2 ist nicht freigegeben.**
+
+Der Auftrag „starte den plan“ hat M1 freigegeben. Das native Diagnosewerkzeug unter `tools/hardware-harness` enthält ausschließlich Mock-Aktionen. Aktueller Nachweisstand: [M1-Bericht](docs/test-reports/M1.md), [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md). Die folgenden Planungsannahmen bleiben historische Ausgangslage, soweit diese Fortschrittsnotiz sie aktualisiert.
 
 Produkt: native macOS Menu-Bar-App und Marketing-Website unter `pullock.app`.
 Leitidee: **Key in. You’re safe. Key out. Mac locked.** Diese Formulierung ist ein Produktziel, keine bereits nachgewiesene Sicherheitsgarantie.
 
 ## 0. Auftrag, Ausgangslage und Entscheidungsregeln
 
-Dieses Dokument erfüllt die Planungsphase. Zusätzlich ist eine ausführliche Repository-README beauftragt. Bis zur ausdrücklichen Freigabe entstehen weder Produktionscode noch App-/Website-Gerüste. Es werden keine Dienste installiert, Berechtigungen verändert, Geräte konfiguriert oder Lock-/Shutdown-Aktionen ausgeführt.
+Dieses Dokument hält die abgeschlossene Planungsphase und die weiteren Meilensteine fest. M1 ist inzwischen zur Untersuchung freigegeben; Produktionscode und App-/Website-Gerüste gehören zu späteren Freigaben. M1 installiert keine Dienste, verändert keine Berechtigungen oder Geräte und führt keine realen Lock-/Shutdown-Aktionen aus.
 
 Ergänzende Vorgaben: GitHub wird nach jedem überprüften, zusammenhängenden Arbeitsstand synchron gehalten. Die Website liegt im selben Repository und läuft auf **GitHub Pages**. Benötigte App-/Website-Grafiken werden im jeweiligen Meilenstein eigens erstellt, überprüft und mit ihren Quellen/Exporten versioniert.
 
@@ -144,9 +146,9 @@ Apple dokumentiert: Terminierung ist eine Service-Terminierung; Iteratoren müss
 Implementierungsregeln für M3:
 
 1. Power-Beobachtung und USB-Notification-Port aufsetzen; moderne SDK-Symbole wie `kIOMainPortDefault` verwenden, nicht alte Beispiele unverändert übernehmen.
-2. Attach- und Termination-Registrierung auf derselben seriellen Verarbeitungslinie installieren; für jede Registrierung eigenes korrekt verwaltetes Matching-Dictionary.
+2. Attach- und Termination-Registrierung auf derselben seriellen Verarbeitungslinie installieren; für jede Registrierung eigenes korrekt verwaltetes Matching-Dictionary. M1-Befund: Bei `IOUSBHostDevice` Herstellerfilter unter `kIOPropertyMatchKey` setzen; ein Top-Level-`idVendor` fand auf dem untersuchten System den vorhandenen Key nicht.
 3. Beide Initial-Iteratoren vollständig drainen und bestehende Instanzen erfassen. Während Bootstrap keine Schutzaktionen zulassen.
-4. Einmalige Bestandsabstimmung nach Registrierung, dann Readiness veröffentlichen. Doppel- und gegenläufige Events über Registry-ID/Epoche deduplizieren.
+4. Einmalige Bestandsabstimmung nach Registrierung, dann Readiness veröffentlichen. Doppel- und gegenläufige Events über Registry-ID/Epoche deduplizieren. `IOServiceGetMatchingServices` darf laut SDK bei Erfolg einen Null-Iterator für einen leeren Bestand liefern; dies ist kein Watcher-Fehler.
 5. `IONotificationPortSetDispatchQueue` für Zustellung; Callback erzeugt begrenzten Event-Wert, die State Machine verarbeitet ihn geordnet.
 6. Identität bei Attach cachen. Nach Termination nicht darauf vertrauen, dass Deskriptoren noch lesbar sind.
 7. Device-Instanz statt einzelner Composite-Interfaces verfolgen. FIDO-, OTP- und CCID-Unterobjekte dürfen nicht drei voneinander unabhängige Keys erzeugen.
@@ -678,4 +680,4 @@ Offizielle Primärquellen, am 29. September 2026 geprüft. Links stehen zusätzl
 | Website | [Next Static Exports](https://nextjs.org/docs/app/guides/static-exports), [Next Metadata](https://nextjs.org/docs/app/getting-started/metadata-and-og-images) | Statischer Build und SEO-Metadaten |
 | GitHub Pages | [Custom Workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [Custom Domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) | Veröffentlichung aus demselben Repo, Domainverwaltung außerhalb einer bloßen CNAME-Datei |
 
-**Nächster autorisierbarer Schritt: M1 — Machbarkeitsnachweise. Bis zur Freigabe dieses Plans wird kein Produktionscode geschrieben.**
+**Aktueller Stand:** M1 ist gestartet; Diagnosewerkzeug, Build und Tests sind vorhanden. Der angeschlossene Yubico-Key bietet in den untersuchten passiven Eigenschaften keine Seriennummer. Ein tragfähiger Lock-/Bestätigungspfad und die Hardwarequalifikation bleiben offen. Vor M2 diese Gates lösen oder eine konkrete Scope-Änderung freigeben; keine automatische Fortsetzung. Nachweise stehen im [M1-Bericht](docs/test-reports/M1.md).

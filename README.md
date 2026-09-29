@@ -6,7 +6,7 @@ Pullock soll einen bereits vorhandenen USB-Security-Key zum physischen Auslöser
 
 Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account und ohne Cloud-Abhängigkeit. Der erste Fokus liegt auf YubiKeys; die vorhandene FIDO2-, WebAuthn-, Passkey-, PIV-, OTP- und SSH-Nutzung soll beim Monitoring unbeeinträchtigt bleiben.
 
-> **Projektstatus: Architektur- und Planungsphase.** Dieses Repository enthält derzeit Dokumentation, keine funktionsfähige Sicherheitsanwendung. Es gibt noch keinen Download, keine bestätigte Gerätekompatibilität und keine implementierte Website. Die Umsetzung beginnt erst nach Freigabe des [Architekturplans](PLAN.md).
+> **Projektstatus: M1 — Machbarkeitsuntersuchung gestartet.** Der Architekturplan ist für M1 freigegeben. Ein natives, kompilierbares [Diagnosewerkzeug](tools/hardware-harness/README.md) mit ausschließlich Mock-Aktionen ist vorhanden. Es gibt noch keine funktionsfähige Sicherheitsanwendung, keinen Download und keine implementierte Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates; siehe [M1-Bericht](docs/test-reports/M1.md).
 
 ## Inhalt
 
@@ -30,17 +30,17 @@ Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account u
 
 | Bereich | Stand |
 | --- | --- |
-| Architektur, Threat Model, Sicherheitsentscheidungen | In [PLAN.md](PLAN.md) ausgearbeitet, wartet auf Freigabe |
+| Architektur, Threat Model, Sicherheitsentscheidungen | In [PLAN.md](PLAN.md) ausgearbeitet; Start von M1 freigegeben |
 | Native macOS-App | Noch nicht implementiert |
-| USB- und Geräteidentifikation | Architektur festgehalten, Hardwarequalifikation offen |
-| Sofortige Sitzungssperre | Machbarkeitsnachweis offen; Release-Voraussetzung |
+| USB- und Geräteidentifikation | Native IOKit-Untersuchung implementiert; ein angeschlossener Key erkannt, passive Seriennummer fehlt; Hardwarequalifikation offen |
+| Sofortige Sitzungssperre | Öffentliche API-/SDK-Prüfung und ungefährlicher Preflight; tragfähiger Lock-/Bestätigungspfad weiterhin offen |
 | Privilegierter Shutdown | Systemweg bewertet, noch nicht implementiert oder praktisch getestet |
 | Marketing-Website | Geplant im selben Repository unter `apps/web` |
 | Hosting | GitHub Pages festgelegt; noch nicht eingerichtet |
 | Zieldomain | `pullock.app` |
 | Download / Release | Noch nicht verfügbar |
 
-Die README beschreibt Ziele und Entscheidungen ausdrücklich als geplant. Implementierte Funktionen, getestete Modelle, Buildbefehle und Downloads werden erst ergänzt, wenn sie tatsächlich verfügbar sind. [PLAN.md](PLAN.md) enthält die ausführliche Begründung, aktuelle Primärquellen und die Abnahmekriterien.
+Die Produktfunktionen dieser README sind weiterhin geplant. Implementiert ist bislang ausschließlich die M1-Untersuchung. [PLAN.md](PLAN.md) enthält Architektur und Abnahmekriterien; [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md) und [Testbericht](docs/test-reports/M1.md) halten den tatsächlichen Nachweisstand fest.
 
 ## Produktidee
 
@@ -152,6 +152,8 @@ Die detaillierte Bedrohungsmatrix und Gegenmaßnahmen sind in [PLAN.md](PLAN.md)
 
 **Noch keine Hardwarekombination ist freigegeben.**
 
+M1 erkennt lokal einen angeschlossenen Yubico-Key mit VID/PID `1050:0407`. In den geprüften Registry-Feldern fehlt die Seriennummer, `iSerialNumber` ist `0`. Diese Beobachtung ist keine Modell-/Firmware- oder Kompatibilitätsfreigabe und reicht nicht für das geplante dauerhafte spezifische Enrollment. Einzelheiten stehen in der [M1-Supportmatrix](docs/compatibility/M1.md).
+
 | Bereich | Geplantes erstes Ziel |
 | --- | --- |
 | Architektur | Apple Silicon / arm64 |
@@ -212,13 +214,16 @@ Aktuell vorhanden:
 
 ```text
 .
+├── .gitignore
 ├── .gitattributes
 ├── LICENSE
 ├── PLAN.md
-└── README.md
+├── README.md
+├── docs/                 M1-Entscheidungen, Supportmatrix und Testbericht
+└── tools/hardware-harness/  Swift-Package mit nativer Diagnose und Mock-Tests
 ```
 
-Geplante Aufteilung nach Freigabe:
+Weitere geplante Aufteilung in den jeweiligen Meilensteinen:
 
 ```text
 apps/macos/        Native App, SessionAgent, Daemon und Xcode-Projekt
@@ -237,7 +242,15 @@ git clone https://github.com/koljasagorski/pullock.app.git
 cd pullock.app
 ```
 
-Es gibt noch kein Xcode-Projekt, Swift-Package oder Web-Package zum Bauen. Konkrete Start-/Buildbefehle werden zusammen mit den zugehörigen funktionsfähigen Targets hinzugefügt. Die Planung wurde auf macOS 27.0, Xcode 27.0 und Swift 6.4 erstellt; das ist noch keine durch Tests bestätigte Toolchain-Matrix.
+Das M1-Swift-Package lässt sich auf der lokal geprüften Toolchain (macOS 27.0, Xcode 27.0, Swift 6.4, arm64) bauen und testen:
+
+```sh
+export PULLOCK_PROBE_BUILD=$(mktemp -d "${TMPDIR%/}/pullock-probe.XXXXXX")
+swift test --package-path tools/hardware-harness --scratch-path "$PULLOCK_PROBE_BUILD"
+swift run --package-path tools/hardware-harness --scratch-path "$PULLOCK_PROBE_BUILD" pullock-probe inspect
+```
+
+Das temporäre Buildverzeichnis vermeidet Finder-/File-Provider-Metadaten, die lokal die Testbundle-Signierung im Projektordner gestört haben. Weitere Befehle und der harmlose USB-Test stehen in der [Werkzeuganleitung](tools/hardware-harness/README.md). Es gibt noch kein Produktions-Xcode-Projekt und kein Web-Package.
 
 Geprüfte zusammenhängende Änderungen werden regelmäßig committed und zu GitHub gepusht. README und Plan bleiben dabei aktuell. Es gibt keine Force-Pushes zum Überschreiben fremder Änderungen. Ein Push von Dokumentation ersetzt weder eine Meilensteinfreigabe noch den Nachweis einer implementierten Funktion.
 
@@ -260,14 +273,14 @@ Latenzmessungen unterscheiden mechanisches Abziehen, OS-Event, Triggerentscheid,
 
 Diagnostics bleiben lokal. Ein bewusst exportierter Report soll Versionen, Health-Ursachen und bereinigte Ereignisse enthalten, jedoch keine Credentials, PINs oder unmaskierten Gerätekennungen. Es gibt keinen geplanten automatischen Upload.
 
-**Bisher wurden keine Anwendungstests durchgeführt, da noch keine Anwendung existiert.**
+**M1: Acht Swift-Tests bestanden**, außerdem native CLI-/Lifecycle-Prüfungen und ein passiver Snapshot des angeschlossenen Keys. Die Tests betreffen die Diagnose, nicht eine fertige Schutzanwendung. Hardwarequalifikation, tatsächliche Sitzungssperre und Shutdown sind damit nicht nachgewiesen. Der [M1-Bericht](docs/test-reports/M1.md) enthält die ausgeführten Befehle, Befunde und offenen Prüfungen.
 
 ## Roadmap
 
 | Meilenstein | Ziel | Stand |
 | --- | --- | --- |
-| M0 | Architekturplan, ausführliche README, GitHub-Synchronisierung | Dokumentation zur Freigabe |
-| M1 | Lock-, Identitäts-, USB-/Power-Machbarkeit | Wartet auf M0-Freigabe |
+| M0 | Architekturplan, ausführliche README, GitHub-Synchronisierung | Plan für den Start von M1 freigegeben |
+| M1 | Lock-, Identitäts-, USB-/Power-Machbarkeit | Diagnosewerkzeug und Tests vorhanden; Lock-/Identitäts-Gates offen |
 | M2 | Zustandskern und sichere Testbasis | Geplant |
 | M3 | USB-Watcher und Enrollment | Geplant |
 | M4 | SMAppService, authentifiziertes XPC und Health | Geplant |
