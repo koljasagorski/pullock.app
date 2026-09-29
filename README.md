@@ -82,7 +82,7 @@ Alle Trigger bleiben bis zum ausdrücklichen Reset verriegelt. Der Rückkanal bi
 - Root-/Kernel-Kompromittierung, vollständig eingefrorene Rechner und kompromittierter vertrauenswürdiger Code liegen außerhalb einer durchsetzbaren Schutzgarantie.
 - Optionaler Shutdown bleibt ein später zu qualifizierender Modus. Er ist derzeit nicht implementiert oder getestet; ein Live-Shutdown wird durch keinen Build-/Testbefehl ausgelöst.
 
-Vor Freigabe fehlen reale Removal-/Lock-/Power-/Session-Tests der integrierten Aktionskette und Installation/Update/Uninstall. Der direkte Xcode-Export des bisherigen Testarchivs wurde mit Developer-ID-Signierung, akzeptierter Notarisierung, gültigem Ticket und Gatekeeper-Akzeptanz unabhängig bestätigt. Der neueste Funktionsstand muss diesen Distributionsweg ebenfalls durchlaufen. Der Kommandozeilenexport meldet weiterhin `No Accounts`; die funktionierende Xcode-Anmeldung wurde bestätigt.
+Vor Freigabe fehlen reale Removal-/Lock-/Power-/Session-Tests der integrierten Aktionskette sowie vollständige Dienstinstallation, Update und Uninstall. Der direkte Xcode-Export von **0.4.1, Build 4** besteht Developer-ID-Signierung, exakte XPC-Signieranforderungen, gültiges Notarisierungsticket und Gatekeeper-Prüfung. Die App ist auf dem Entwicklungs-Mac unter `/Applications` installiert und gestartet; die drei installierten Binaries bestehen ihre harmlosen Selbsttests. Die installierte Dienstverbindung und tatsächliche Sperre bleiben zu prüfen. Der [Abnahmebericht](docs/test-reports/M5-live-check.md) trennt diese Nachweise. Der Kommandozeilenexport meldet weiterhin `No Accounts`; der funktionierende Organizer-Weg ist bestätigt.
 
 ## Bewusster Test auf einem Entwicklungs-Mac
 

@@ -26,12 +26,12 @@ Das Ergebnis heißt ausdrücklich `PullockDevelopment` und ist nur für die loka
 | Power, Session, Koexistenz, Fehlerszenarien | Modelltests vorhanden; reale Matrix offen |
 | UI, Installation, Update und Uninstall | USB-Auswahl, Diagnose- und Sperrtestfenster; Produkt-/Installationsabnahme offen |
 | Developer ID Application / Installer | Bezahltes Team in Xcode bestätigt. Direkter Organizer-Export des Testarchivs erfolgreich; App und beide Helfer mit Developer ID Application signiert. Installer nur für ein späteres PKG erforderlich |
-| Notarisierung, Stapling, Gatekeeper, frisches Testsystem | Testarchiv von Commit `67f0a71` von Apple akzeptiert, Ticket validiert, Gatekeeper akzeptiert. Neuester Funktionsstand und frisches Testsystem noch offen |
+| Notarisierung, Stapling, Gatekeeper, frisches Testsystem | Export von 0.4.1 Build 4 besteht Developer ID, exakte XPC-Anforderungen, Stapling und Gatekeeper vor/nach lokaler Installation. App-Start und installierte Selbsttests bestanden; Dienst-/Sperrtest und frisches Testsystem offen |
 | Privater Sicherheitsmeldeweg | Vor ausführbarem öffentlichem Release festlegen und verifizieren |
 
 Diese Tabelle ist ein Nachweisstand, keine automatische Freigabe durch umgesetzte boolesche Flags. Ein erfolgreicher Paket- oder CI-Build ersetzt die fehlenden Prüfungen nicht.
 
-Aktuell vorbereitet: **0.4.1, Build 4, IPC 3**. Das Apple-Development-Archiv besteht die genauen Zertifikat-/Identifier-Anforderungen von App, Agent und Daemon. Frühere Archive enthielten abweichende Helfer-Kennungen, die trotz gültiger Signaturen den authentifizierten Verbindungsaufbau verhindern; deren Notarisierung ist kein Funktionsnachweis. Der nächste Schritt ist der Organizer-Export dieses korrigierten Archivs und die [installierte Abnahme](../test-reports/M5-live-check.md).
+Aktuell lokal installiert: **0.4.1, Build 4, IPC 3**. Der notarisiert exportierte Developer-ID-Build besteht die genauen Zertifikat-/Identifier-Anforderungen von App, Agent und Daemon. Frühere Archive enthielten abweichende Helfer-Kennungen, die trotz gültiger Signaturen den authentifizierten Verbindungsaufbau verhindern; deren Notarisierung ist kein Funktionsnachweis. Der nächste Schritt ist die [installierte Dienst- und Sperrabnahme](../test-reports/M5-live-check.md) des korrigierten Builds.
 
 ## Veröffentlichung nach Qualifikation
 

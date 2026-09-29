@@ -1,6 +1,19 @@
 # M5 — Abnahme des installierten Sperrtests
 
-Vorbereiteter Stand: **0.4.1, Build 4, IPC-Protokoll 3**. Die nachstehenden realen Prüfungen sind **noch nicht durchgeführt**. Die 179 automatischen Tests ersetzen sie nicht. Kein Schritt dieses Dokuments wird von CI ausgeführt.
+Installierter Stand: **0.4.1, Build 4, IPC-Protokoll 3**. Exportprüfung, lokale Installation und App-Start sind bestanden. Die installierte Dienstkette und die nachstehenden realen Sperrprüfungen sind **noch nicht bestätigt**. Die 179 automatischen Tests ersetzen sie nicht. Kein Schritt dieses Dokuments wird von CI ausgeführt.
+
+## Bestätigter Export und lokaler Start
+
+Geprüft auf Apple Silicon, **macOS 27.0.1 (26A434)** am vorhandenen Entwicklungs-Mac:
+
+- Der vom Nutzer übergebene Export enthält Version 0.4.1 und Build 4. Sein äußerer Ordner hatte keine `.app`-Endung; eine Kopie wurde als `PullockDevelopment.app` geprüft und installiert. Der Originalexport blieb unverändert.
+- App, SessionAgent und Daemon bestehen strikte Signaturprüfung, Developer ID Application, dieselbe Team-ID, Hardened Runtime und die exakten, auf das App-Zertifikat gebundenen XPC-Identifier-Anforderungen. Kein Debug-Entitlement.
+- `stapler validate` und Gatekeeper-Prüfung bestehen vor und nach der Installation.
+- Alle Dateien der Installation unter `/Applications/PullockDevelopment.app` sind bytegleich mit der geprüften Exportkopie. Es wurde keine vorhandene App überschrieben.
+- Die drei installierten Binaries bestehen `--self-check` mit Protokoll 3 und null Aktionen. Der anschließend geöffnete App-Prozess wurde am Installationspfad nachgewiesen.
+- Der installierte Daemon besteht die separate passive USB-/Power-/Sitzungsprüfung. Dabei waren null USB-Geräte sichtbar; es wurden weder ein Listener gestartet noch Aktionen ausgeführt.
+
+Dies belegt den lokalen Start, keine frische Systeminstallation und noch keinen erfolgreichen Hintergrunddienst-Handshake oder Sperrvorgang. Maschinenbezogene Prüfsummen und der lokale Prüfbeleg bleiben außerhalb von Git.
 
 ## Installation und Einrichtung
 
