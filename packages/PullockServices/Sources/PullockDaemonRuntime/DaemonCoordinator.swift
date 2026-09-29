@@ -20,6 +20,7 @@ final class DaemonCoordinator {
     private let readInventory: @MainActor () throws -> [WireDevice]
     private let validateOwner: @MainActor (UInt32, Int32) throws -> OwnerSessionPolicy
     private let actionSink: @MainActor (ActionRequest) -> Void
+    private let lockRouteAvailable: @MainActor (OwnerSessionPolicy) -> Bool
     private var owner: OwnerSessionPolicy?
     private var ownerActive = false
     private var running = true
@@ -31,11 +32,13 @@ final class DaemonCoordinator {
          clock: @escaping @MainActor () -> UInt64 = { MonotonicTime.milliseconds },
          readInventory: @escaping @MainActor () throws -> [WireDevice],
          validateOwner: @escaping @MainActor (UInt32, Int32) throws -> OwnerSessionPolicy,
-         actionSink: @escaping @MainActor (ActionRequest) -> Void = { _ in }) throws {
+         actionSink: @escaping @MainActor (ActionRequest) -> Void = { _ in },
+         lockRouteAvailable: @escaping @MainActor (OwnerSessionPolicy) -> Bool = { _ in false }) throws {
         authority = try ProtectionAuthority(capabilities: capabilities)
         bootID = authority.bootID
         self.clock = clock; self.readInventory = readInventory
         self.validateOwner = validateOwner; self.actionSink = actionSink
+        self.lockRouteAvailable = lockRouteAvailable
         cache = SnapshotCache(authority.snapshot(now: clock()))
     }
 
@@ -58,7 +61,17 @@ final class DaemonCoordinator {
         // Reconciliation can be slower than the queue handoff. Never mutate
         // policy/arming after the caller's admission deadline has elapsed.
         try checkDeadline(receivedAt)
-        let result = try authority.command(payload, role: role, owner: current, now: clock())
+        let effective: WirePayload
+        if case let .sessionReadiness(generation, progress, available) = payload {
+            effective = .sessionReadiness(generation: generation, progress: progress,
+                lockAvailable: available && lockRouteAvailable(current))
+        } else { effective = payload }
+        refreshLocalReadiness()
+        let result = try authority.command(effective, role: role, owner: current, now: clock())
+        switch effective {
+        case .disarm, .resetTrigger: pendingInventory = authority.snapshot(now: clock()).epoch
+        default: break
+        }
         drainEffects()
         // A command's response includes the result of its fresh reconciliation.
         if case .snapshot = result { return .snapshot(state: authority.snapshot(now: clock())) }
@@ -107,6 +120,7 @@ final class DaemonCoordinator {
         // Progress proves this event loop was serviced, not USB future health.
         authority.processed(.daemon, now: clock())
         if watcherReady { authority.processed(.watcher, now: clock()) }
+        refreshLocalReadiness()
         drainEffects(); publish()
     }
 
@@ -129,6 +143,28 @@ final class DaemonCoordinator {
         authority.ownerBecameInactive(now: clock())
         running = false; pendingInventory = nil
         drainEffects(); publish()
+    }
+
+    var currentOwner: OwnerSessionPolicy? { ownerActive ? owner : nil }
+
+    /// Results originate from the authenticated route owned by this host.
+    /// Transport loss is uncertain: never turn it into confirmed lock success.
+    func actionCompleted(_ result: ActionResult, for owner: OwnerSessionPolicy) {
+        guard running else { return }
+        recheckOwner()
+        guard ownerActive, self.owner?.uid == owner.uid,
+              self.owner?.auditSession == owner.auditSession else { return }
+        _ = try? authority.command(.lockResult(result: result), role: .sessionAgent, owner: owner, now: clock())
+        drainEffects(); publish()
+    }
+
+    private func refreshLocalReadiness() {
+        let state = authority.snapshot(now: clock())
+        authority.processed(.policy, condition: state.policyRevision == nil ? .unavailable : .healthy, now: clock())
+        authority.processed(.identity, condition: state.matchingDeviceCount == 1 ? .healthy : .unavailable, now: clock())
+        if let owner, !lockRouteAvailable(owner) {
+            authority.processed(.lockPath, condition: .unavailable, now: clock())
+        }
     }
 
     private func checkDeadline(_ receivedAt: UInt64) throws {
@@ -156,6 +192,7 @@ final class DaemonCoordinator {
             do {
                 let devices = try readInventory()
                 try authority.inventory(devices, epoch: epoch, now: clock())
+                refreshLocalReadiness()
             } catch {
                 watcherReady = false
                 try? authority.lifecycle(.watcherRestarted, now: clock())

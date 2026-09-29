@@ -27,7 +27,7 @@ struct LockTestView: View {
             Section("Manual test") {
                 Button("Lock this Mac now…") { confirm = true }.disabled(!permitted)
                 Text(message)
-                Text("“Lock requested” records only the shortcut submission. Check yourself that macOS actually locked. Automatic USB-triggered protection remains unavailable during qualification.")
+                Text("“Lock requested” records only the shortcut submission. Check yourself that macOS actually locked. Test the session agent separately by choosing a USB device and explicitly arming Pullock.")
                     .foregroundStyle(.secondary)
             }
         }

@@ -123,7 +123,7 @@ public final class ProtectionAuthority: Sendable {
                 guard role == .app || role == .sessionAgent else { throw AuthorityError.unauthorized }
             case .getDevices, .configure, .arm, .disarm, .resetTrigger:
                 guard role == .app else { throw AuthorityError.unauthorized }
-            case .sessionHeartbeat, .lockResult:
+            case .sessionHeartbeat, .sessionReadiness, .lockResult:
                 guard role == .sessionAgent else { throw AuthorityError.unauthorized }
             default: throw AuthorityError.unauthorized
             }
@@ -148,6 +148,11 @@ public final class ProtectionAuthority: Sendable {
             case let .resetTrigger(id): event = .resetTrigger(id)
             case let .sessionHeartbeat(generation, progress):
                 event = .health(HealthObservation(.agent, generation: generation, progress: progress))
+            case let .sessionReadiness(generation, progress, available):
+                let transition = send(.health(HealthObservation(.agent, generation: generation, progress: progress)), state: &state, now: now)
+                guard transition.accepted else { throw AuthorityError.rejected }
+                health(.lockPath, condition: available ? .healthy : .unavailable, state: &state, now: now)
+                event = nil
             case let .lockResult(result):
                 // The public shortcut cannot report confirmed lock success.
                 guard result.outcome == .unknown || result.outcome == .failed else { throw AuthorityError.rejected }

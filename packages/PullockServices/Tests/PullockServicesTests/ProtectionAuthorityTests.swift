@@ -21,6 +21,28 @@ private func prepared(live: Bool = false) throws -> ProtectionAuthority {
     return host
 }
 
+@Test func sessionReadinessCannotBeSpoofedByAppOrReplayedAcrossGenerations() throws {
+    let host = try prepared()
+    let generation = host.snapshot(now: 100).healthGeneration
+    let ready = WirePayload.sessionReadiness(generation: generation, progress: 100, lockAvailable: true)
+    #expect(throws: AuthorityError.unauthorized) { try host.command(ready, role: .app, owner: owner(), now: 100) }
+    _ = try host.command(ready, role: .sessionAgent, owner: owner(), now: 100)
+    #expect(throws: AuthorityError.rejected) { try host.command(ready, role: .sessionAgent, owner: owner(), now: 101) }
+    try host.lifecycle(.willSleep, now: 102)
+    #expect(throws: AuthorityError.rejected) { try host.command(ready, role: .sessionAgent, owner: owner(), now: 103) }
+    #expect(host.snapshot(now: 103).issues.contains(.missingHealth(.lockPath)))
+}
+
+@Test func freshErrorSnapshotAllowsRepairWithoutRenewingStalePrerequisites() throws {
+    let host = try prepared()
+    let old = host.snapshot(now: 100)
+    let current = host.snapshot(now: 4_000)
+    #expect(old.validUntil <= 4_000)
+    #expect(current.generatedAt == 4_000 && current.validUntil > 4_000)
+    #expect(current.issues.contains(.staleHealth(.agent)))
+    #expect(current.status == .error && !current.isProtected(at: 4_000))
+}
+
 @Test func authorityRequiresAuthenticatedOwnerAndSeparatesRoles() throws {
     let host = try ProtectionAuthority()
     #expect(throws: AuthorityError.unavailable) { try host.command(.getHealth, role: .app, owner: owner(), now: 100) }

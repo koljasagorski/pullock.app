@@ -1,4 +1,6 @@
 import Foundation
+import AppKit
+import PullockActions
 import PullockCore
 import PullockIPC
 import PullockServices
@@ -8,23 +10,49 @@ if arguments == ["--monitor-health"] {
     guard geteuid() != 0 else { exit(78) }
     do {
         let trust = try ServiceTrust.developmentPeer(role: .daemon)
+        let adapter = ShortcutLock()
+        let executor = LockActionExecutor { _ in
+            try adapter.requestLock()
+            return .unknown // A submitted shortcut is not confirmed lock success.
+        }
+        let receiver = NativeLockReceiver(executor: executor)
+        let lease = SessionLeaseGuard(executor: executor)
+        let notifications = NSWorkspace.shared.notificationCenter
+        let observers = [NSWorkspace.willSleepNotification, NSWorkspace.sessionDidResignActiveNotification].map { name in
+            notifications.addObserver(forName: name, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { lease.suspend() }
+            }
+        }
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now(), repeating: .milliseconds(250))
+        timer.setEventHandler { MainActor.assumeIsolated { _ = lease.tick() } }
+        timer.activate()
         Task {
             while !Task.isCancelled {
                 do {
-                    let client = try NativeHealthClient(trust: trust, clientRole: .sessionAgent)
+                    let client = try NativeHealthClient(trust: trust, clientRole: .sessionAgent, lockReceiver: receiver)
                     do {
                         try await client.connect()
+                        _ = try await client.health()
+                        var state = try await client.enableLockDelivery()
+                        try lease.observe(state)
                         while !Task.isCancelled {
-                            _ = try await client.health()
+                            let available: Bool
+                            do { try adapter.preflight(); available = true } catch { available = false }
+                            let response = try await client.request(.sessionReadiness(generation: state.healthGeneration,
+                                progress: MonotonicTime.milliseconds, lockAvailable: available))
+                            guard case let .snapshot(next) = response else { throw HealthClientError.invalidReply }
+                            state = next
+                            try lease.observe(state)
                             try await Task.sleep(for: .seconds(1))
                         }
-                    } catch { /* No action fallback exists in this diagnostic build. */ }
+                    } catch { /* Reconnect without replaying any completed action. */ }
                     await client.close()
                 } catch { /* Retry only the same fixed, authenticated endpoint. */ }
                 try? await Task.sleep(for: .seconds(2))
             }
         }
-        RunLoop.main.run()
+        withExtendedLifetime((receiver, lease, timer, observers)) { RunLoop.main.run() }
         exit(0)
     } catch {
         fputs("Pullock diagnostic agent requires an Apple signing certificate.\n", stderr)

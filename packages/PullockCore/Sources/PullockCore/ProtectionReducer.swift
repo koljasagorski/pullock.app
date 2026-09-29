@@ -51,7 +51,8 @@ public struct ProtectionReducer: Sendable {
         let lockID = trigger.map { ActionID(trigger: $0, kind: .lock, cause: .removal) }
         let shutdownID = trigger.map { ActionID(trigger: $0, kind: .shutdown, cause: .removal) }
         return StateSnapshot(
-            bootID: bootID, revision: revision, generatedAt: now, validUntil: deadline,
+            bootID: bootID, revision: revision, generatedAt: now,
+            validUntil: status == .armed ? deadline : addingLease(now),
             profile: capabilities.profile, status: status, policyRevision: policy?.revision, mode: mode,
             armIntent: armIntent, seenKeySinceArming: seen, epoch: epoch,
             healthGeneration: healthGeneration, power: power, session: session,
@@ -140,11 +141,15 @@ public struct ProtectionReducer: Sendable {
         return reasons
     }
 
+    private func addingLease(_ time: UInt64) -> UInt64 {
+        let (value, overflow) = time.addingReportingOverflow(healthLeaseMilliseconds)
+        return overflow ? UInt64.max : value
+    }
+
+    // An ARMED view expires with its oldest prerequisite. A freshly generated
+    // error view still has a display lease, so clients can reconnect and repair
+    // missing health. Its issues never imply renewed prerequisite health.
     private var deadline: UInt64 {
-        func addingLease(_ time: UInt64) -> UInt64 {
-            let (value, overflow) = time.addingReportingOverflow(healthLeaseMilliseconds)
-            return overflow ? UInt64.max : value
-        }
         return requiredHealth.compactMap { health[$0].map { addingLease($0.observedAt) } }
             .reduce(addingLease(now), min)
     }

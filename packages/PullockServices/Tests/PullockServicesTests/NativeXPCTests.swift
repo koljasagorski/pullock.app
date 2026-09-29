@@ -46,6 +46,38 @@ private final class ReverseRecord: Sendable {
     let active = Mutex(true)
 }
 
+private final class RouteProbe: Sendable {
+    let listener = Mutex<NativeHealthListener?>(nil)
+    let available = Mutex(false)
+}
+
+@Test(.timeLimit(.minutes(1))) func hostMayInspectReverseRouteWhileProcessingAgentReadiness() async throws {
+    let health = try FixtureHealth(), probe = RouteProbe()
+    let requirement = try ownRequirement()
+    let listener = NativeHealthListener(
+        testTrust: try ServiceTrust(requirement: requirement, role: .sessionAgent, development: true),
+        boot: health.boot, owner: owner, snapshot: health.snapshot, command: { peer, payload, _ in
+            if case .sessionReadiness = payload {
+                let route = probe.listener.withLock { $0 }
+                let available = route?.lockRouteAvailable(for: peer.owner) == true
+                probe.available.withLock { $0 = available }
+            }
+            return .snapshot(state: health.snapshot())
+        })
+    probe.listener.withLock { $0 = listener }
+    defer { listener.stop(); probe.listener.withLock { $0 = nil } }
+    listener.start()
+    let executor = await LockActionExecutor { _ in .unknown }
+    let client = try NativeHealthClient(testEndpoint: listener.endpoint,
+        trust: ServiceTrust(requirement: requirement, role: .daemon, development: true),
+        clientRole: .sessionAgent, expectedUID: geteuid(), lockReceiver: NativeLockReceiver(executor: executor))
+    try await client.connect()
+    let state = try await client.enableLockDelivery()
+    _ = try await client.request(.sessionReadiness(generation: state.healthGeneration, progress: 1, lockAvailable: true))
+    #expect(probe.available.withLock { $0 })
+    await client.close()
+}
+
 private final class ReverseFixture: Sendable {
     let health: FixtureHealth
     let listener: NativeHealthListener

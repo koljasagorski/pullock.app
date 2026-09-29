@@ -6,16 +6,17 @@ import SwiftUI
 struct DaemonDevicesView: View {
     @Environment(ServiceInspector.self) private var inspector
     @Environment(\.openWindow) private var openWindow
+    @State private var confirmArm = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("DEVELOPMENT · NO PROTECTION").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Text("DEVELOPMENT · AUTOMATIC LOCK TEST").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             HStack(spacing: 16) {
                 Image("PullockSymbol").resizable().scaledToFit().frame(width: 64, height: 64)
                     .accessibilityLabel("Pullock")
                 Text("Pull the key. Lock the Device.").font(.largeTitle.weight(.semibold))
             }
-            Text("Choose any detected compatible USB device. The planned workflow is: select a device, arm Pullock, then disconnect that device to request a screen lock. Automatic protection is still under development.")
+            Text("Choose any detected compatible USB device, then arm Pullock. Disconnecting that selected device requests a Mac screen lock.")
                 .foregroundStyle(.secondary)
             HStack {
                 Button("Connect to background service") { inspector.connect() }
@@ -48,18 +49,44 @@ struct DaemonDevicesView: View {
                             if inspector.selectedInstance == device.instance {
                                 Label("Selected", systemImage: "checkmark.circle")
                             } else {
-                                Button("Choose") { inspector.choose(device) }.disabled(inspector.busy)
+                                Button("Choose") { inspector.choose(device) }.disabled(!inspector.canChoose)
                             }
                         }
                         .padding(.vertical, 8)
                     }
                 }
             }
+            TimelineView(.periodic(from: .now, by: 1)) { _ in
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(inspector.protectionLabel).font(.headline).accessibilityAddTraits(.updatesFrequently)
+                    HStack {
+                        Button("Arm Pullock…") { confirmArm = true }.disabled(!inspector.canArm)
+                            .buttonStyle(.borderedProminent)
+                        Button("Disarm") { inspector.disarm() }
+                            .disabled(inspector.busy || inspector.freshSnapshot?.armIntent != true || inspector.freshSnapshot?.trigger != nil)
+                        if inspector.freshSnapshot?.trigger != nil {
+                            Button("Reset after trigger") { inspector.resetTrigger() }
+                                .disabled(inspector.busy || inspector.freshSnapshot?.lockOutcome?.isTerminal != true)
+                        }
+                    }
+                    if !inspector.lockRouteReady {
+                        Text("Set up the session agent and its screen lock permission before arming.")
+                            .font(.callout).foregroundStyle(.secondary)
+                    }
+                }
+            }
             Text(inspector.selectionMessage).font(.callout)
             Text("USB sticks and other observable USB devices are supported for selection. Contents are never opened. Unplugging, sleep, a session change or a service restart requires a new selection.")
+                .font(.caption).foregroundStyle(.secondary)
+            Text("Test build: shortcut submission does not confirm that macOS locked. Verify the lock screen and normal authentication during your test.")
                 .font(.caption).foregroundStyle(.secondary)
             if let message = inspector.message { Text(message).font(.caption).foregroundStyle(.secondary) }
         }
         .padding(28)
+        .confirmationDialog("Arm this USB connection?", isPresented: $confirmArm) {
+            Button("Arm and enable real lock requests") { inspector.arm() }
+        } message: {
+            Text("Disconnecting the selected device will request Control–Command–Q. A failure of the monitoring connection can also request a lock. Unlock normally afterwards; disarm before quitting or removing services.")
+        }
     }
 }

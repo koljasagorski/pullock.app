@@ -14,15 +14,15 @@ python3 tools/release/package-development.py \
   --output "$PULLOCK_VALIDATION_ROOT/review-bundle"
 ```
 
-Das Ergebnis heißt ausdrücklich `PullockDevelopment`, enthält **keinen automatischen Live-Schutz**, aber einen ausdrücklich gestarteten manuellen Sperrtest, und ist nur für die lokale Prüfung bestimmt. Es ist ad-hoc-signiert, nicht notarisiert. Der Packager lädt nichts hoch, erzeugt keinen Tag und behauptet keine bitidentischen Xcode-Builds. Die Source-Dateien werden einzeln gehasht; der Manifest-Digest identifiziert diesen Quellstand unabhängig vom lokalen Git-Index.
+Das Ergebnis heißt ausdrücklich `PullockDevelopment` und ist nur für die lokale Prüfung bestimmt. Der Quellstand enthält den integrierten automatischen Sperrtest; dieses ad-hoc-signierte, nicht notarisierte Paket kann jedoch keine authentifizierten installierten Dienste bereitstellen. Deshalb meldet das Manifest `automaticActions: false` für dieses Paket und zusätzlich `automaticActionCodeIncluded: true` mit den nötigen Voraussetzungen. Der manuelle App-Sperrtest bleibt eine ausdrücklich bestätigte UI-Aktion. Der Packager lädt nichts hoch, erzeugt keinen Tag und behauptet keine bitidentischen Xcode-Builds. Die Source-Dateien werden einzeln gehasht; der Manifest-Digest identifiziert diesen Quellstand unabhängig vom lokalen Git-Index.
 
 ## Noch offene Bedingungen
 
 | Bedingung | Tatsächlicher Stand |
 | --- | --- |
 | USB-Identität und reale Wiedererkennung | Nutzerentscheidung: beliebige aktuelle USB-Verbindung ohne Seriennummer auswählen; implementiert, reale Removal-Matrix offen |
-| Sitzungssperre und ehrliches Erfolgskriterium | Öffentlicher Control–Command–Q-Adapter ausdrücklich beauftragt und als manueller Test implementiert; nur „Sperre angefordert“, reale Tests offen |
-| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative USB-/Power-/Konsolenbeobachtung und Auswahl, Policy-Store, eingebettete Helfer und Registrierungs-UI; automatische Aktionskette und installierte Produktionsprüfung offen |
+| Sitzungssperre und ehrliches Erfolgskriterium | Öffentlicher Control–Command–Q-Adapter in manuellem Test und Agent integriert; keine behauptete Sperrbestätigung, reale Tests offen |
+| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative Beobachtung/Auswahl, Policy-Store, Rückkanal, unabhängiger Lease-Watchdog und Registrierungs-UI; integrierte Mock-Kette bestanden, installierte Produktionsprüfung offen |
 | Power, Session, Koexistenz, Fehlerszenarien | Modelltests vorhanden; reale Matrix offen |
 | UI, Installation, Update und Uninstall | USB-Auswahl, Diagnose- und Sperrtestfenster; Produkt-/Installationsabnahme offen |
 | Developer ID Application / Installer | Bezahltes Team in Xcode bestätigt. Direkter Organizer-Export des Testarchivs erfolgreich; App und beide Helfer mit Developer ID Application signiert. Installer nur für ein späteres PKG erforderlich |

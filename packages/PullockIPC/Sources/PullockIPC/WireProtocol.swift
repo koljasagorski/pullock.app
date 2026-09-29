@@ -13,6 +13,7 @@ public enum WirePayload: Equatable, Codable, Sendable {
     case disarm(expectedArming: UInt64)
     case resetTrigger(id: TriggerID)
     case sessionHeartbeat(generation: UInt64, progress: UInt64)
+    case sessionReadiness(generation: UInt64, progress: UInt64, lockAvailable: Bool)
     case enableLockDelivery(nonce: UUID)
     case lockResult(result: ActionResult)
     case performLock(id: ActionID)
@@ -40,7 +41,7 @@ public struct WireDevice: Equatable, Codable, Sendable {
 }
 
 public struct WireEnvelope: Equatable, Codable, Sendable {
-    public static let currentVersion = 1
+    public static let currentVersion = 2
     public let version: Int
     public let connectionID: UUID
     public let bootID: UUID
@@ -84,6 +85,7 @@ public enum WireCodec {
             "hello": ["role"], "getHealth": [], "getDevices": [], "devices": ["inventory", "state"], "configure": ["policy", "expectedRevision"],
             "arm": ["expectedRevision"], "disarm": ["expectedArming"], "resetTrigger": ["id"],
             "sessionHeartbeat": ["generation", "progress"], "lockResult": ["result"],
+            "sessionReadiness": ["generation", "progress", "lockAvailable"],
             "enableLockDelivery": ["nonce"],
             "performLock": ["id"], "snapshot": ["state"],
         ]
@@ -174,7 +176,7 @@ public struct WireSession: Sendable {
         case .getDevices: localRole == .daemon && remoteRole == .app
         case .devices: localRole == .app && remoteRole == .daemon
         case .configure, .arm, .disarm, .resetTrigger: localRole == .daemon && remoteRole == .app
-        case .sessionHeartbeat, .lockResult, .enableLockDelivery: localRole == .daemon && remoteRole == .sessionAgent
+        case .sessionHeartbeat, .sessionReadiness, .lockResult, .enableLockDelivery: localRole == .daemon && remoteRole == .sessionAgent
         case .performLock: localRole == .sessionAgent && remoteRole == .daemon
         case .snapshot: remoteRole == .daemon && (localRole == .app || localRole == .sessionAgent)
         }
@@ -187,6 +189,8 @@ public struct WireSession: Sendable {
         case let .arm(revision):
             guard revision > 0 else { throw WireError.invalidPayload }
         case let .sessionHeartbeat(generation, progress):
+            guard generation > 0, progress > 0 else { throw WireError.invalidPayload }
+        case let .sessionReadiness(generation, progress, _):
             guard generation > 0, progress > 0 else { throw WireError.invalidPayload }
         case let .performLock(id):
             guard id.kind == .lock, id.trigger.boot == bootID, id.trigger.arming > 0 else {

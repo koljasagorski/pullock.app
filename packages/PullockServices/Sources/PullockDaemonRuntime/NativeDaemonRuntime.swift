@@ -8,8 +8,8 @@ import PullockServices
 import PullockUSB
 import SystemConfiguration
 
-/// The development daemon now owns USB and power observation. Live action
-/// capabilities stay unavailable; no input-event or shutdown adapter is linked.
+/// Owns USB/power observation. Optional lock requests go to the authenticated
+/// user's agent; the root daemon never links an input-event or shutdown adapter.
 @MainActor
 public final class NativeDaemonRuntime {
     public nonisolated let bootID: UUID
@@ -22,11 +22,26 @@ public final class NativeDaemonRuntime {
     private var timer: DispatchSourceTimer?
     private var started = false
     private var stopped = false
+    private let route: LockRoute
+    private let delivery: LockDeliveryDriver
 
-    public init() throws {
+    public init(enableShortcutRequests: Bool = false) throws {
         let usb = NativeUSBSource()
-        let coordinator = try DaemonCoordinator(readInventory: { try usb.read() },
-            validateOwner: { try DiagnosticConsoleAccess.owner(effectiveUID: $0, auditSession: $1) })
+        let route = LockRoute()
+        let delivery = LockDeliveryDriver(deliver: { request, owner in
+            guard let listener = route.listener else { throw LockTransportError.unavailable }
+            return try await listener.deliverLock(request, owner: owner)
+        }, completed: { result, owner in route.coordinator?.actionCompleted(result, for: owner) })
+        let coordinator = try DaemonCoordinator(
+            capabilities: .init(lock: enableShortcutRequests ? .qualified : .unavailable),
+            readInventory: { try usb.read() },
+            validateOwner: { try DiagnosticConsoleAccess.owner(effectiveUID: $0, auditSession: $1) },
+            actionSink: { request in
+                guard let owner = route.coordinator?.currentOwner else { return }
+                delivery.submit(request, owner: owner)
+            }, lockRouteAvailable: { route.listener?.lockRouteAvailable(for: $0) == true })
+        route.coordinator = coordinator
+        self.route = route; self.delivery = delivery
         self.usb = usb; self.coordinator = coordinator
         bootID = coordinator.bootID; cache = coordinator.cache
         power = NativePowerSource { [weak coordinator] event in coordinator?.lifecycle(event) }
@@ -43,6 +58,12 @@ public final class NativeDaemonRuntime {
     }
 
     isolated deinit { stop() }
+
+    /// Host-only wiring, before start. No wire command can replace the route.
+    public func attachSessionAgent(_ listener: NativeHealthListener) throws {
+        guard !started, !stopped, route.listener == nil else { throw DaemonRuntimeError.stopped }
+        route.listener = listener
+    }
 
     public func start() throws {
         guard !started, !stopped else { throw DaemonRuntimeError.stopped }
@@ -61,6 +82,7 @@ public final class NativeDaemonRuntime {
     public func stop() {
         guard !stopped else { return }
         stopped = true
+        delivery.stop()
         timer?.cancel(); timer = nil
         usb.stop(); console.stop(); power.stop(); coordinator.stop()
     }
@@ -81,6 +103,12 @@ public final class NativeDaemonRuntime {
             return try handoff.perform(transaction)
         }
     }
+}
+
+@MainActor
+private final class LockRoute {
+    weak var listener: NativeHealthListener?
+    weak var coordinator: DaemonCoordinator?
 }
 
 @MainActor

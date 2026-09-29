@@ -16,3 +16,5 @@ apps/web/out/
 **/test-results/
 *.tsbuildinfo
 *.sb-*
+__pycache__/
+*.py[cod]

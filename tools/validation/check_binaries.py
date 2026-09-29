@@ -23,7 +23,7 @@ for component, binary in binaries.items():
     report = json.loads(output.stdout)
     assert report["component"] == component
     assert report["realActions"] == 0
-    assert report["protocolVersion"] == 1
+    assert report["protocolVersion"] == 2
     if component == "app":
         assert report["simulationScenarios"] == 6
     else:
@@ -35,8 +35,8 @@ for component, binary in binaries.items():
     symbols = subprocess.check_output(["nm", "-u", str(binary)], text=True)
     imports = {line.split()[-1] for line in symbols.splitlines() if line.strip()}
     assert not (imports & forbidden), f"{component}: forbidden imports {imports & forbidden}"
-    if component != "app":
-        assert not (imports & {"_CGEventPost", "_CGRequestPostEventAccess"}), "Only the explicit app test may request input"
+    if component == "daemon":
+        assert not (imports & {"_CGEventPost", "_CGRequestPostEventAccess"}), "The root daemon must not post input"
     subprocess.run(["codesign", "--verify", "--strict", str(binary)], check=True, capture_output=True, timeout=10)
     print(f"PASS {component}: self-check, code signature, direct symbol audit")
 

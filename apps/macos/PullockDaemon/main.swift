@@ -26,11 +26,12 @@ if arguments == ["--inspect-runtime"] {
 if arguments == ["--serve-health"] {
     do {
         guard geteuid() == 0 else { throw PeerPolicyError.invalidOwner }
-        let runtime = try NativeDaemonRuntime()
+        let runtime = try NativeDaemonRuntime(enableShortcutRequests: true)
         let app = try NativeHealthListener(trust: .developmentPeer(role: .app), boot: runtime.bootID,
             owner: DiagnosticConsoleAccess.owner, snapshot: runtime.snapshot, command: runtime.commandHandler)
         let agent = try NativeHealthListener(trust: .developmentPeer(role: .sessionAgent), boot: runtime.bootID,
             owner: DiagnosticConsoleAccess.owner, snapshot: runtime.snapshot, command: runtime.commandHandler)
+        try runtime.attachSessionAgent(agent)
         try runtime.start()
         app.start(); agent.start()
         withExtendedLifetime((runtime, app, agent)) { RunLoop.main.run() }

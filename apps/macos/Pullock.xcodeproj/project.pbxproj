@@ -22,6 +22,7 @@
 		705844DD8EF6EC49473B94DE /* DaemonDevicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230C41B466A191E3E4B7E29 /* DaemonDevicesView.swift */; };
 		71A3DFA8E50967409A360485 /* PullockCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4EFBF84C7BB28D96C5610D8 /* PullockCore */; };
 		743DB583B9B1F5ECA3061FB4 /* PullockServices in Frameworks */ = {isa = PBXBuildFile; productRef = F3FCC0C4A90539B2BF55C60B /* PullockServices */; };
+		87AB4581FBDE51D90641693E /* PullockActions in Frameworks */ = {isa = PBXBuildFile; productRef = 9987129170B4D7F82158EC3B /* PullockActions */; };
 		888241C601C98150E2FEDE19 /* PullockSimulation in Frameworks */ = {isa = PBXBuildFile; productRef = 6F8822C2F49F691ECC276E79 /* PullockSimulation */; };
 		8B1C81E8403C05499E116897 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29EFFAF402F5717AC0F24C6 /* main.swift */; };
 		96371E65C3E3925A83D29754 /* PullockSessionAgent in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = C789A7AC0063625E7497A89B /* PullockSessionAgent */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -31,6 +32,7 @@
 		B8AA230FBB46A5BA0BF1D51C /* ServiceInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABF3F5AD21DB5314A02B1A9D /* ServiceInspector.swift */; };
 		F58E8A2271B467A9F5AA80D6 /* app.pullock.daemon.development.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = 18EFA27D3D62DCFF00085D68 /* app.pullock.daemon.development.plist */; };
 		F6B672A1B480D63BBA43611E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 869D0840541511899B62E2A6 /* Assets.xcassets */; };
+		FCD490C801C8CF140C22B2B9 /* ApplicationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB6A28DABB3CFCCB7A456FD /* ApplicationDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +102,7 @@
 		8DEF7948FF45C2C986BDAC41 /* PullockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullockApp.swift; sourceTree = "<group>"; };
 		A29EFFAF402F5717AC0F24C6 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		ABF3F5AD21DB5314A02B1A9D /* ServiceInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceInspector.swift; sourceTree = "<group>"; };
+		ADB6A28DABB3CFCCB7A456FD /* ApplicationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationDelegate.swift; sourceTree = "<group>"; };
 		BA8FE1B89709EB74B4690F97 /* app.pullock.session-agent.development.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "app.pullock.session-agent.development.plist"; sourceTree = "<group>"; };
 		C789A7AC0063625E7497A89B /* PullockSessionAgent */ = {isa = PBXFileReference; includeInIndex = 0; path = PullockSessionAgent; sourceTree = BUILT_PRODUCTS_DIR; };
 		C84FD86A0E2BE2273324FA58 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -114,6 +117,7 @@
 				07F30B276F0FF9D436372E6E /* PullockCore in Frameworks */,
 				288EA8DB30F71F1C52D7C7A0 /* PullockIPC in Frameworks */,
 				743DB583B9B1F5ECA3061FB4 /* PullockServices in Frameworks */,
+				87AB4581FBDE51D90641693E /* PullockActions in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,6 +209,7 @@
 		D1EAD86FBA7BA5EA9245F603 /* PullockApp */ = {
 			isa = PBXGroup;
 			children = (
+				ADB6A28DABB3CFCCB7A456FD /* ApplicationDelegate.swift */,
 				869D0840541511899B62E2A6 /* Assets.xcassets */,
 				3230C41B466A191E3E4B7E29 /* DaemonDevicesView.swift */,
 				6DE91C1F20D3EFBEBAF70BCF /* LockTestView.swift */,
@@ -234,6 +239,7 @@
 				B8083361055822B5A96CE28E /* PullockCore */,
 				9EA36204CB84549140E541A0 /* PullockIPC */,
 				F3FCC0C4A90539B2BF55C60B /* PullockServices */,
+				9987129170B4D7F82158EC3B /* PullockActions */,
 			);
 			productName = PullockSessionAgent;
 			productReference = C789A7AC0063625E7497A89B /* PullockSessionAgent */;
@@ -370,6 +376,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCD490C801C8CF140C22B2B9 /* ApplicationDelegate.swift in Sources */,
 				705844DD8EF6EC49473B94DE /* DaemonDevicesView.swift in Sources */,
 				02A0888BCA8A648DFB9B5CD6 /* LockTestView.swift in Sources */,
 				35F5E41E66F7A857521DFC5C /* PullockApp.swift in Sources */,
@@ -711,6 +718,10 @@
 		6F8822C2F49F691ECC276E79 /* PullockSimulation */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PullockSimulation;
+		};
+		9987129170B4D7F82158EC3B /* PullockActions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PullockActions;
 		};
 		9EA36204CB84549140E541A0 /* PullockIPC */ = {
 			isa = XCSwiftPackageProductDependency;

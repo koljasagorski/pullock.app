@@ -85,6 +85,8 @@ def main():
         manifest = {
             "schemaVersion": 1, "version": version, "buildKind": "development",
             "protection": "unavailable", "automaticActions": False, "manualScreenLockTest": True,
+            "automaticActionCodeIncluded": True,
+            "automaticActionPrerequisites": "Apple-signed approved services, agent input permission and explicit arming",
             "distributionQualification": "not_qualified",
             "minimumMacOS": info.get("LSMinimumSystemVersion"), "architecture": architectures,
             "sourceTreeSHA256": source_tree_digest, "sources": sources,
@@ -96,7 +98,9 @@ def main():
             "Pullock Development — LOCAL REVIEW ONLY — NO PROTECTION\n\n"
             "This build shows USB connection selection and labelled simulations.\n"
             "It includes an explicit manual screen-lock test with macOS input permission.\n"
-            "Automatic protection and shutdown are unavailable. No service is registered automatically.\n"
+            "Automatic lock-test code requires Apple-signed approved services and explicit arming.\n"
+            "This ad-hoc bundle cannot establish those service connections. Shutdown is unavailable.\n"
+            "No service is registered automatically.\n"
             "It is ad-hoc signed, not Developer-ID signed or notarized.\n"
             "Do not disable Gatekeeper to distribute it.\n"
             "This bundle is not the finished security release.\n\n"

@@ -148,6 +148,7 @@ private final class HealthChannel: NSObject, PullockXPCTransport, @unchecked Sen
         var deliveryOwner: OwnerSessionPolicy?
         var deliverySequence: UInt64 = 0
         var pendingDelivery: UUID?
+        var pendingExchange: UUID?
     }
     private let state: Mutex<State>
     private let owner: PeerOwnerProvider
@@ -172,19 +173,27 @@ private final class HealthChannel: NSObject, PullockXPCTransport, @unchecked Sen
             try current.validate(effectiveUID: connection.effectiveUserIdentifier, auditSession: connection.auditSessionIdentifier)
             guard packet.length <= WireCodec.maximumBytes else { throw WireError.tooLarge }
             let data = Data(bytes: packet.bytes, count: packet.length)
-            let response = try state.withLock { state in
-                let view = snapshot()
-                let now = MonotonicTime.milliseconds
-                guard now < state.deadline else { throw ConnectionBudgetError.timeout }
-                let handler: ((WirePayload) throws -> WirePayload)? = command.map { command in
-                    { payload in try command(ServicePeer(role: self.role, owner: current), payload, now) }
+            let now = MonotonicTime.milliseconds
+            var (ticket, session) = try state.withLock { state in
+                guard now < state.deadline, !state.session.closed, state.pendingExchange == nil else {
+                    throw ConnectionBudgetError.timeout
                 }
-                let value = try state.session.receive(data, now: now, snapshot: view, command: handler)
-                if state.session.lockDeliveryNonce != nil { state.deliveryOwner = current }
+                let ticket = UUID(); state.pendingExchange = ticket
+                return (ticket, state.session)
+            }
+            // The host may hop to its event loop and inspect this same route.
+            // Never hold the channel mutex across a host callback.
+            let handler: ((WirePayload) throws -> WirePayload)? = command.map { command in
+                { payload in try command(ServicePeer(role: self.role, owner: current), payload, now) }
+            }
+            let response = try session.receive(data, now: now, snapshot: snapshot(), command: handler)
+            try state.withLock { state in
                 let finished = MonotonicTime.milliseconds
-                guard finished >= now, finished - now < 2_000 else { throw ConnectionBudgetError.timeout }
+                guard state.pendingExchange == ticket, !state.session.closed,
+                      finished >= now, finished - now < 2_000 else { throw ConnectionBudgetError.timeout }
+                state.session = session; state.pendingExchange = nil
+                if state.session.lockDeliveryNonce != nil { state.deliveryOwner = current }
                 if state.session.established { state.deadline = Self.deadline(after: 5_000) }
-                return value
             }
             reply(response as NSData)
         } catch {
@@ -196,6 +205,7 @@ private final class HealthChannel: NSObject, PullockXPCTransport, @unchecked Sen
     func invalidate() {
         let connection = state.withLock { state in
             state.session.invalidate()
+            state.pendingExchange = nil
             let connection = state.connection; state.connection = nil
             return connection
         }

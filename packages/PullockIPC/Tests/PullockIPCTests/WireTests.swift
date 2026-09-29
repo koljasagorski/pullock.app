@@ -12,7 +12,7 @@ private struct Peer {
         session = WireSession(localRole: local, remoteRole: remote, connectionID: Self.connection, bootID: Self.boot)
     }
 
-    func packet(_ payload: WirePayload, sequence: UInt64 = 2, version: Int = 1,
+    func packet(_ payload: WirePayload, sequence: UInt64 = 2, version: Int = WireEnvelope.currentVersion,
                 connection: UUID = Self.connection, boot: UUID = Self.boot) throws -> Data {
         try WireCodec.encode(WireEnvelope(version: version, connectionID: connection,
             bootID: boot, sequence: sequence, payload: payload))
@@ -32,6 +32,22 @@ private struct Peer {
     let result = try p.session.receive(data, now: 100)
     #expect(result == .getHealth)
     #expect(p.session.established)
+}
+
+@Test func legacyReadinessContractIsRejectedBeforeHandshake() throws {
+    var p = Peer()
+    let oldHello = try p.packet(.hello(role: .app), sequence: 1, version: 1)
+    #expect(throws: WireError.unsupportedVersion) { try p.session.receive(oldHello, now: 100) }
+    #expect(!p.session.established)
+
+    let nonce = UUID()
+    let request = try JSONSerialization.data(withJSONObject: ["version": 1, "nonce": nonce.uuidString])
+    #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.request(request) }
+    let reply = try JSONSerialization.data(withJSONObject: ["version": 1, "nonce": nonce.uuidString,
+        "connectionID": UUID().uuidString, "bootID": UUID().uuidString])
+    #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.reply(reply, expectedNonce: nonce) }
+    let current = BootstrapRequest(nonce: nonce)
+    #expect(try BootstrapCodec.request(BootstrapCodec.encode(current)) == current)
 }
 
 @Test func versionConnectionBootAndReplayAreChecked() throws {

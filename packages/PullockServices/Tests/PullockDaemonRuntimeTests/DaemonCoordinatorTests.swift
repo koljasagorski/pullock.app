@@ -14,14 +14,16 @@ private final class Fixture {
     var readDelay: UInt64 = 0
     var readFails = false
     var actions: [ActionRequest] = []
-    lazy var host = try! DaemonCoordinator(clock: { self.now }, readInventory: {
+    var routeAvailable = false
+    var capabilities = RuntimeCapabilities()
+    lazy var host = try! DaemonCoordinator(capabilities: capabilities, clock: { self.now }, readInventory: {
         self.reads += 1; self.now += self.readDelay
         if self.readFails { throw DaemonRuntimeError.observationUnavailable }
         return self.devices
     }, validateOwner: { uid, session in
         guard uid == 501, session == 42 else { throw PeerPolicyError.wrongSession }
         return try OwnerSessionPolicy(uid: uid, auditSession: session, active: self.active)
-    }, actionSink: { self.actions.append($0) })
+    }, actionSink: { self.actions.append($0) }, lockRouteAvailable: { _ in self.routeAvailable })
 
     func request(_ payload: WirePayload, receivedAt: UInt64? = nil) throws -> WirePayload {
         try host.command(role: .app, uid: 501, session: 42, receivedAt: receivedAt ?? now, payload: payload)
@@ -38,6 +40,83 @@ private final class Fixture {
         _ = try request(.configure(policy: policy, expectedRevision: state.policyRevision))
         return policy
     }
+
+    func readiness(_ available: Bool) throws {
+        host.pulse()
+        _ = try host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: now,
+            payload: .sessionReadiness(generation: host.cache.load().healthGeneration,
+                progress: now, lockAvailable: available))
+    }
+}
+
+@Test @MainActor func selectedDeviceAloneTriggersTheIntegratedHost() throws {
+    let fixture = Fixture()
+    fixture.capabilities = .init(profile: .simulation, lock: .mockOnly)
+    fixture.routeAvailable = true
+    fixture.devices.append(WireDevice(instance: 99, vendorID: 0x2222, productID: 0x1111, name: "Mouse"))
+    fixture.host.watcherStarted(); fixture.host.pulse()
+    let policy = try fixture.select()
+    try fixture.readiness(true)
+    _ = try fixture.request(.arm(expectedRevision: policy.revision))
+    #expect(fixture.host.cache.load().status == .armed)
+    fixture.host.removed(99)
+    #expect(fixture.actions.isEmpty && fixture.host.cache.load().status == .armed)
+    fixture.host.removed(12); fixture.host.removed(12)
+    #expect(fixture.actions.count == 1)
+    let action = try #require(fixture.actions.first)
+    #expect(action.id.cause == .removal && action.id.kind == .lock)
+    fixture.host.actionCompleted(ActionResult(id: action.id, outcome: .unknown),
+        for: try OwnerSessionPolicy(uid: 501, auditSession: 42, active: true))
+    #expect(fixture.host.cache.load().lockOutcome == .unknown)
+}
+
+@Test @MainActor func readinessNeedsBothAgentPreflightAndUniqueAuthenticatedRoute() throws {
+    for route in [false, true] {
+        let fixture = Fixture()
+        fixture.capabilities = .init(profile: .simulation, lock: .mockOnly)
+        fixture.routeAvailable = route
+        fixture.host.watcherStarted(); fixture.host.pulse()
+        let policy = try fixture.select()
+        try fixture.readiness(!route)
+        _ = try fixture.request(.arm(expectedRevision: policy.revision))
+        #expect(fixture.host.cache.load().status != .armed)
+        fixture.host.removed(12)
+        #expect(fixture.actions.isEmpty)
+    }
+}
+
+@Test @MainActor func routeLossInvalidatesArmedStateAndRequiresExplicitRecovery() throws {
+    let fixture = Fixture()
+    fixture.capabilities = .init(profile: .simulation, lock: .mockOnly)
+    fixture.routeAvailable = true
+    fixture.host.watcherStarted(); fixture.host.pulse()
+    let policy = try fixture.select(); try fixture.readiness(true)
+    _ = try fixture.request(.arm(expectedRevision: policy.revision))
+    #expect(fixture.host.cache.load().status == .armed)
+    fixture.routeAvailable = false; fixture.host.pulse()
+    #expect(fixture.host.cache.load().status == .error)
+    #expect(fixture.actions.count == 1 && fixture.actions[0].id.cause == .healthFailure)
+    fixture.routeAvailable = true; fixture.now += 1; try fixture.readiness(true)
+    #expect(fixture.host.cache.load().status == .error)
+}
+
+@Test @MainActor func disarmAndResetRefreshInventoryBeforeChoosingAgain() throws {
+    let fixture = Fixture()
+    fixture.capabilities = .init(profile: .simulation, lock: .mockOnly)
+    fixture.routeAvailable = true
+    fixture.host.watcherStarted(); fixture.host.pulse()
+    let policy = try fixture.select(); try fixture.readiness(true)
+    _ = try fixture.request(.arm(expectedRevision: policy.revision))
+    _ = try fixture.request(.disarm(expectedArming: fixture.host.cache.load().epoch.arming))
+    let second = try fixture.select()
+    _ = try fixture.request(.arm(expectedRevision: second.revision))
+    fixture.devices = []; fixture.host.removed(12)
+    let action = try #require(fixture.actions.last)
+    fixture.host.actionCompleted(ActionResult(id: action.id, outcome: .unknown),
+        for: try OwnerSessionPolicy(uid: 501, auditSession: 42, active: true))
+    fixture.devices = [WireDevice(instance: 13, vendorID: 0x2222, productID: 0x1111, name: "Different device")]
+    _ = try fixture.request(.resetTrigger(id: action.id.trigger))
+    #expect(try fixture.select().enrollment.connection?.instance == 13)
 }
 
 @Test @MainActor func daemonOwnsFreshInventoryAcrossConfigureAndArm() throws {

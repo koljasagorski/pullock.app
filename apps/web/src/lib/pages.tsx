@@ -10,10 +10,10 @@ export const pages: Record<string, ContentPage> = {
     description: "The planned workflow: Pullock detects compatible USB devices. Select one, arm the app and disconnect that device to request a screen lock.",
     sections: [
       { title: "Choose what to track", body: <p>Pullock detects connected USB devices. Choose any compatible device from the list, including a USB stick or another USB peripheral. The selection is tied to that connection and the current system session. The development app already supports passive inspection and selection.</p> },
-      { title: "Check, then arm Pullock", body: <p>The intended protection mode requires healthy local services, macOS permission to post the lock shortcut and an explicit activation. Automatic activation is not available in the current development build.</p> },
-      { title: "Removal requests a lock", body: <p>Once Pullock is armed, disconnecting the selected USB device is intended to request the standard Control + Command + Q shortcut. A successful handoff means <strong>Lock requested</strong>. It cannot confirm that macOS actually locked. The current app offers a separate, explicitly started manual shortcut test.</p> },
-      { title: "Start fresh after a change", body: <p>Removal, sleep, a session change, a watcher restart or a Mac restart invalidate the selection. Reconnecting the same device does not restore it. Choose the new connection and explicitly activate again when the finished protection mode becomes available.</p> },
-      { title: "Separate local responsibilities", body: <p>The native app provides controls, a daemon observes connections, and the planned session agent handles the shortcut in your session. The website does not participate in this chain. See <Link href="/security/">the security model</Link> for its limits.</p> },
+      { title: "Check, then arm Pullock", body: <p>The development lock test requires healthy local services, macOS permission for the session agent and explicit arming. Installing or opening the app does not arm it. This path still needs qualification with installed services and real hardware.</p> },
+      { title: "Removal requests a lock", body: <p>After explicit arming, the integrated development path requests Control + Command + Q when the selected connection ends. The result remains <strong>unconfirmed</strong>: neither posting input nor a transport timeout proves whether macOS locked. A separate manual shortcut test is also available.</p> },
+      { title: "Start fresh after a change", body: <p>Removal, sleep, a session change, a watcher restart or a Mac restart invalidate the selection. Reconnecting the same device does not restore it. Choose the new connection and explicitly arm again for another test.</p> },
+      { title: "Separate local responsibilities", body: <p>The native app provides controls, a daemon observes connections, and the session agent handles the shortcut in your session. The website does not participate in this chain. See <Link href="/security/">the security model</Link> for its limits.</p> },
     ],
   },
   compatibility: {
@@ -31,7 +31,7 @@ export const pages: Record<string, ContentPage> = {
     title: "Know what a lock request means.",
     description: "Pullock is intended as an additional physical trigger. It cannot guarantee that macOS locks in every situation.",
     sections: [
-      { title: "Development is not protection", body: <p>The current build does not provide automatic live protection. Selection, diagnostic status or a running helper must not be mistaken for an armed killswitch. The automatic removal-to-lock chain remains unfinished.</p> },
+      { title: "Development is not protection", body: <p>The development build includes an automatic lock-test path after explicit arming. It is not a qualified security release. Selection, diagnostic status or a running helper alone does not mean the chain is armed; real hardware and installed-service checks remain open.</p> },
       { title: "Request, not confirmation", body: <p>The public shortcut adapter posts Control + Command + Q after checking permission, session and keyboard layout. Its success result only confirms that input was requested. It does not prove the screen is locked or set a guaranteed lock time.</p> },
       { title: "A connection can end for several reasons", body: <p>macOS reports an observed USB connection ending. It does not prove someone physically pulled the stick. A hub reset or power change can produce the same event. The connection selection deliberately expires instead of silently attaching to another device.</p> },
       { title: "Limits of the threat model", body: <p>Taking the Mac and device together may leave the connection intact. A frozen operating system, root or kernel compromise, or compromised trusted application code cannot be overcome by this utility. Keep your password, FileVault and normal security controls enabled.</p> },
@@ -43,7 +43,7 @@ export const pages: Record<string, ContentPage> = {
     title: "The first release is being built.",
     description: "There is no finished protection app to download yet. Follow the public source and qualification work.",
     sections: [
-      { title: "What is available today", body: <p>The source includes a development app with passive USB inspection, service diagnostics, simulations and an explicit manual lock test. It is not an automatic security product. <a href={repository}>Source on GitHub</a>.</p> },
+      { title: "What is available today", body: <p>The source includes USB inspection, service diagnostics, simulations, a manual lock test and an integrated automatic lock test after explicit arming. It is not yet a qualified security product. <a href={repository}>Source on GitHub</a>.</p> },
       { title: "What must happen before download", body: <p>The automatic action chain, real removal and lock behavior, permission handling, installation, update and uninstall still need end-to-end qualification. The final code must then be signed, notarized and verified as the actual distribution artifact.</p> },
       { title: "Where the release will appear", body: <p>Qualified app packages, source and checksums will be published in <a href={`${repository}/releases`}>GitHub Releases</a> for this repository. This page will link to the verified package once it exists.</p> },
     ],
@@ -52,10 +52,10 @@ export const pages: Record<string, ContentPage> = {
     title: "An open record of progress.",
     description: "Current development work and the remaining steps toward the first protection release.",
     sections: [
-      { title: "Development 0.4.0", body: <p>The current native source has 147 automated tests across state handling, USB observation, IPC, services, the daemon runtime, the shortcut adapter and diagnostics. Debug and Release builds pass locally. These checks do not run real locks or install services.</p> },
+      { title: "Development 0.4.0", body: <p>The current native source has 167 automated tests across state handling, USB observation, IPC, services, the daemon runtime, the shortcut adapter and diagnostics. Debug and Release builds pass locally. These checks do not run real locks or install services.</p> },
       { title: "Brand and website", body: <p>The provided Pullock identity is integrated into the app icon, native header and this website. The website uses a static export, local fonts and no analytics integration. The browser demonstration never accesses hardware.</p> },
       { title: "Distribution evidence", body: <p>An earlier test archive passed Developer ID signing, Apple notarization, stapling and Gatekeeper assessment. That result does not qualify later source changes or demonstrate an operational killswitch.</p> },
-      { title: "Still in progress", body: <p>The automatic daemon-to-agent action path, real hardware and session checks, final installation flow and distribution of the completed app remain open. <a href={`${repository}/blob/main/docs/test-reports/M4-M5.md`}>Read the native test report</a> or <a href={`${repository}/releases`}>check published releases</a>.</p> },
+      { title: "Still in progress", body: <p>The daemon-to-agent action path now passes an integrated test using real authenticated anonymous XPC and a mock action. Physical removal and locking, installed services, session behavior and distribution of the completed app remain open. <a href={`${repository}/blob/main/docs/test-reports/M4-M5.md`}>Read the native test report</a> or <a href={`${repository}/releases`}>check published releases</a>.</p> },
     ],
   },
   support: {

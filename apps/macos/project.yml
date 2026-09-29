@@ -84,6 +84,7 @@ targets:
       - package: PullockCore
       - package: PullockIPC
       - package: PullockServices
+      - package: PullockActions
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.pullock.session-agent.development
