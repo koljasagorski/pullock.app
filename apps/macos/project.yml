@@ -94,6 +94,7 @@ targets:
       - package: PullockCore
       - package: PullockIPC
       - package: PullockServices
+        product: PullockDaemonRuntime
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.pullock.daemon.development

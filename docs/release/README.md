@@ -22,11 +22,11 @@ Das Ergebnis heißt ausdrücklich `PullockDevelopment`, enthält **keinen automa
 | --- | --- |
 | USB-Identität und reale Wiedererkennung | Nutzerentscheidung: beliebige aktuelle USB-Verbindung ohne Seriennummer auswählen; implementiert, reale Removal-Matrix offen |
 | Sitzungssperre und ehrliches Erfolgskriterium | Öffentlicher Control–Command–Q-Adapter ausdrücklich beauftragt und als manueller Test implementiert; nur „Sperre angefordert“, reale Tests offen |
-| Dienste, authentifiziertes XPC, sichere Konfiguration | Native Health-Verbindungen, Policy-Store, eingebettete Helfer und Registrierungs-UI; automatische Aktionskette und installierte Produktionsprüfung offen |
+| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative USB-/Power-/Konsolenbeobachtung und Auswahl, Policy-Store, eingebettete Helfer und Registrierungs-UI; automatische Aktionskette und installierte Produktionsprüfung offen |
 | Power, Session, Koexistenz, Fehlerszenarien | Modelltests vorhanden; reale Matrix offen |
 | UI, Installation, Update und Uninstall | USB-Auswahl, Diagnose- und Sperrtestfenster; Produkt-/Installationsabnahme offen |
-| Developer ID Application / Installer | Bezahlter Developer-Zugang bestätigt, Xcode-Einrichtung begonnen; Development-Archiv vorhanden, Developer-ID-Export wegen „No Accounts“ bislang blockiert |
-| Notarisierung, Stapling, Gatekeeper, frisches Testsystem | Noch nicht durchgeführt |
+| Developer ID Application / Installer | Bezahltes Team in Xcode bestätigt. Direkter Organizer-Export des Testarchivs erfolgreich; App und beide Helfer mit Developer ID Application signiert. Installer nur für ein späteres PKG erforderlich |
+| Notarisierung, Stapling, Gatekeeper, frisches Testsystem | Testarchiv von Commit `67f0a71` von Apple akzeptiert, Ticket validiert, Gatekeeper akzeptiert. Neuester Funktionsstand und frisches Testsystem noch offen |
 | Privater Sicherheitsmeldeweg | Vor ausführbarem öffentlichem Release festlegen und verifizieren |
 
 Diese Tabelle ist ein Nachweisstand, keine automatische Freigabe durch umgesetzte boolesche Flags. Ein erfolgreicher Paket- oder CI-Build ersetzt die fehlenden Prüfungen nicht.
@@ -47,6 +47,8 @@ Referenzen: [Apple: Notarisierung](https://developer.apple.com/documentation/sec
 
 Der Account wird direkt in **Xcode → Settings → Accounts** eingerichtet. Danach in der Zertifikatsverwaltung `Developer ID Application` bereitstellen; für ein späteres signiertes PKG zusätzlich `Developer ID Installer`. Ein App-ZIP benötigt keinen Installer-Signierer. Account-Rolle, Vertragszustand und Zertifikatsrechte bestimmt Apple. Der Archivhelfer in [development.md](../development.md) kann den tatsächlichen Export anschließend prüfen; Zugangsdaten gehören nicht ins Repository oder in den Chat.
 
-Die Notarisierung benötigt danach einen lokal hinterlegten Zugang für `notarytool` (Keychain-Profil oder geeigneten API-Key). Keine Notarisierungsdaten werden geraten oder aus anderen Anwendungen ausgelesen. Ein erfolgreich signiertes Diagnosearchiv bleibt bis zur funktionalen Qualifikation ein lokaler Test-Build.
+Xcodes Organizer kann über **Direct Distribution** mit dem bereits angemeldeten Account signieren und notarisieren. Dieser Weg wurde erfolgreich geprüft. Alternativ kann `notarytool` einen lokal hinterlegten Zugang (Keychain-Profil oder geeigneten API-Key) verwenden. Ein zusätzliches Notarytool-Passwort ist für den funktionierenden Organizer-Weg nicht nötig. Keine Notarisierungsdaten werden geraten oder aus anderen Anwendungen ausgelesen. Ein erfolgreich signiertes Diagnosearchiv bleibt bis zur funktionalen Qualifikation ein lokaler Test-Build.
+
+Der Kommandozeilenexport meldete trotz bestätigtem bezahlten Team weiter `No Accounts`. Geprüft wurden dieselbe Xcode-Installation und derselbe macOS-Benutzer. Das ist kein Beleg für einen nicht eingerichteten Benutzeraccount: Die über die Xcode-Oberfläche exportierte App wurde anschließend unabhängig auf Developer ID, Hardened Runtime, gültiges Ticket und Gatekeeper-Akzeptanz geprüft. Das Archiv und seine privaten Distributionslogs bleiben lokal.
 
 [Apple: Developer-ID-Zertifikate](https://developer.apple.com/help/account/certificates/create-developer-id-certificates), [Apple: Notarisierungsablauf](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import PullockCore
+import PullockIPC
 import PullockServices
 import ServiceManagement
 import SwiftUI
@@ -13,9 +14,13 @@ final class ServiceInspector {
     private(set) var connection = "Not connected"
     private(set) var message: String?
     private(set) var snapshot: StateSnapshot?
+    private(set) var devices: [WireDevice] = []
+    private(set) var selectedInstance: UInt64?
+    private(set) var selectionMessage = "Choose a USB connection reported by the background service."
     private(set) var busy = false
     @ObservationIgnored private var client: NativeHealthClient?
     @ObservationIgnored private var polling: Task<Void, Never>?
+    @ObservationIgnored private var pendingSelection: (payload: WirePayload, instance: UInt64)?
     @ObservationIgnored private let daemonService = SMAppService.daemon(plistName: "app.pullock.daemon.development.plist")
     @ObservationIgnored private let agentService = SMAppService.agent(plistName: "app.pullock.session-agent.development.plist")
 
@@ -65,17 +70,31 @@ final class ServiceInspector {
                 self.client = client
                 try await client.connect()
                 while !Task.isCancelled {
-                    snapshot = try await client.health()
-                    connection = "Authenticated health connection"
+                    if let pending = pendingSelection {
+                        pendingSelection = nil
+                        guard case .snapshot = try await client.request(pending.payload) else { throw HealthClientError.invalidReply }
+                        selectedInstance = pending.instance
+                        selectionMessage = "Connection selected in the background service. Automatic protection is not active."
+                        busy = false
+                    }
+                    guard case let .devices(inventory, state) = try await client.request(.getDevices) else {
+                        throw HealthClientError.invalidReply
+                    }
+                    devices = inventory; snapshot = state
+                    if state.issues.contains(.selectionExpired) {
+                        selectedInstance = nil
+                        selectionMessage = "Selection expired. Choose a current USB connection again."
+                    }
+                    connection = "Authenticated device connection"
                     try await Task.sleep(for: .seconds(1))
                 }
             } catch {
-                snapshot = nil
+                snapshot = nil; devices = []; selectedInstance = nil
                 connection = "Connection unavailable"
                 message = "The service must be registered, approved and signed with the same Apple certificate as this app."
             }
             if let client = self.client { await client.close() }
-            self.client = nil; self.polling = nil
+            self.client = nil; self.polling = nil; self.pendingSelection = nil; self.busy = false
             refresh()
         }
     }
@@ -85,7 +104,22 @@ final class ServiceInspector {
         let task = polling
         if let client { await client.close() }
         await task?.value
-        polling = nil; client = nil; snapshot = nil; connection = "Not connected"
+        polling = nil; client = nil; snapshot = nil; devices = []; selectedInstance = nil
+        pendingSelection = nil; busy = false; connection = "Not connected"
+    }
+
+    func choose(_ device: WireDevice) {
+        guard !busy, polling != nil, let state = snapshot, state.generatedAt <= MonotonicTime.milliseconds,
+              MonotonicTime.milliseconds < state.validUntil, devices.contains(device),
+              (state.policyRevision ?? 0) < UInt64.max else { return }
+        do {
+            let connection = try ConnectionIdentity(bootID: state.bootID, watcher: state.epoch.watcher,
+                power: state.epoch.power, instance: device.instance)
+            let enrollment = try Enrollment(id: UUID(), vendorID: device.vendorID, productID: device.productID, connection: connection)
+            let policy = try ProtectionPolicy(revision: (state.policyRevision ?? 0) + 1, enrollment: enrollment)
+            pendingSelection = (.configure(policy: policy, expectedRevision: state.policyRevision), device.instance)
+            busy = true; selectionMessage = "Confirming this connection with the background service…"
+        } catch { selectionMessage = "This connection cannot be selected. Refresh the device list." }
     }
 
     private static func label(_ value: SMAppService.Status) -> String {
@@ -100,7 +134,7 @@ final class ServiceInspector {
 }
 
 struct ServiceInspectorView: View {
-    @State private var inspector = ServiceInspector()
+    @Environment(ServiceInspector.self) private var inspector
     @State private var confirmRegistration = false
 
     var body: some View {
@@ -142,7 +176,6 @@ struct ServiceInspectorView: View {
         }
         .formStyle(.grouped)
         .onAppear { inspector.refresh() }
-        .onDisappear { Task { await inspector.disconnect() } }
         .confirmationDialog("Register diagnostic background services?", isPresented: $confirmRegistration) {
             Button("Register services") { inspector.register() }
         } message: {

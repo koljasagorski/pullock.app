@@ -1,6 +1,6 @@
 # PullockServices
 
-Native NSXPC-Verbindungen, ein flüchtiger Diagnose-Host und ein separat geprüfter Policy-Store. Der laufende Transport bietet ausschließlich Bootstrap, Hello und Health. Er lehnt Konfiguration, Arming, USB-Injektion und Aktionen ab.
+Native NSXPC-Verbindungen, ein autoritativer Host und ein separat geprüfter Policy-Store. Das getrennte Produkt `PullockDaemonRuntime` verbindet den Host mit passiver USB-, Power- und Konsolenbeobachtung. Es bestätigt aktuelle Verbindungsauswahlen; automatische Live-Aktionen bleiben nicht qualifiziert. Der Transport ohne expliziten Command-Handler bietet weiterhin nur Bootstrap, Hello und Health.
 
 - Client/Server prüfen die Signaturanforderung vor Aktivierung. Entwicklungsverbindungen pinnen das eigene Apple-Zertifikat und die exakte Peer-Bundle-ID. Ad-hoc-Binaries können diesen Weg nicht verwenden; Produktionsanforderungen bleiben Developer-ID-/Team-/rollenbegrenzt.
 - Der Server erzeugt Verbindungs- und Boot-Kennungen; Nonce-Echo, Rollen, Reihenfolge und Snapshot-Ablauf werden geprüft. Keine sensiblen Daten vor dem Handshake.
@@ -16,4 +16,12 @@ Tests prüfen echte anonyme NSXPC-Verbindungen mit exakter Testhost-Code-Signatu
 
 `ProtectionAuthority` ist ein synchroner, Mutex-geschützter Host des Reducers. Der vertrauenswürdige Daemon liefert aktuelle Watcher-/Power-/Session-Ereignisse; Clients können keine Hardwareereignisse injizieren. Owner-Bindung, Rollengrenzen, aktuelle Verbindungsauswahl, Revisionen und Aktionsrückmeldungen werden erneut geprüft. Nur Lock-Verbindungs-Policies sind zulässig; der öffentliche Shortcut darf keine bestätigte Sperre zurückmelden. Effekte werden nach dem Commit abgeholt. Ein nicht bedienter Effektpuffer stoppt weitere Aktivierung, ohne Lock-Anforderungen zu verwerfen.
 
-Native Listener können ausdrücklich einen Command-Handler erhalten. Dieser bekommt `ServicePeer` aus den aktuell geprüften OS-Credentials, nicht aus JSON. Der Default bleibt Health-only; die bestehenden Entwicklungs-Targets aktivieren keinen solchen Aktions-Handler. Die Defaults der Autorität erlauben ebenfalls kein reales ARMED. Tests mit Mock-Fähigkeiten prüfen die komplette Auswahl→Arm→Inventar→Removal→Ergebnis-Transaktion, aber keine echte Sitzungssperre.
+Native Listener können ausdrücklich einen Command-Handler erhalten. Dieser bekommt `ServicePeer` aus den aktuell geprüften OS-Credentials, nicht aus JSON. Der Entwicklungsdaemon verwendet ihn für autoritative Inventare und Konfiguration. Die Defaults der Autorität erlauben kein reales ARMED. Tests mit Mock-Fähigkeiten prüfen die komplette Auswahl→Arm→Inventar→Removal→Ergebnis-Transaktion, aber keine echte Sitzungssperre.
+
+## Daemon-Laufzeit
+
+USB-Callbacks, Power-Ereignisse, Session-Neuprüfung, Inventarlesen und Befehle werden auf dem MainActor serialisiert. Eine Epoche wird vor der Enumeration festgehalten. Power wird vor USB registriert und Sleep sofort bestätigt. Konsolenänderungen werden über SystemConfiguration beobachtet; ein 250-ms-Puls prüft zusätzlich den gebundenen Besitzer und bedient die Health-Kette, ohne USB periodisch zu pollen.
+
+Die XPC-Übergabe wartet höchstens 900 ms und hält höchstens acht Aufträge. Abgelaufene Aufträge behalten ihren Slot bis zur Abarbeitung und starten danach nicht mehr. Bereits begonnene OS-Aufrufe sind nicht präemptiv abbrechbar. Vor Konfigurations-/Arming-Transaktionen werden Besitzer und 1-Sekunden-Frist erneut geprüft. Ein eingefrorener MainActor kann den gecachten Snapshot durch XPC-Lesezugriffe nicht erneuern. Der Native-Host konstruiert ausschließlich nicht qualifizierte Live-Fähigkeiten; er linkt keine echten Aktionsadapter.
+
+Tests verwenden injizierte Inventare und Uhren und prüfen Auswahl, Removal/Replug, Sleep/Wake, Session-Entzug, langsame Enumeration, Snapshot-Ablauf und Warteschlangenbegrenzung. Die installierte Root-/Aqua-Prozesskette und reale OS-Ereignisreihenfolge bleiben praktisch zu prüfen.

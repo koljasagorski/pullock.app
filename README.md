@@ -13,12 +13,13 @@ Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch
 | Zustandskern | 41 Tests; Auswahl an Boot/Watcher/Power gebunden, Health-Leases, Ereignisreihenfolge, verriegelte Trigger und getrennte Aktionsanforderungen |
 | USB-Beobachtung | 20 Tests; passiver IOKit-Watcher, aktuelle Geräte verschiedener Hersteller, Auswahl einer einzelnen Verbindung und deren sichere Invalidierung |
 | IPC | 26 Vertrag-/Signatur-/Rollen-/Budgettests |
-| Native Dienste / Speicher | 28 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Verbindungslimits/Timeouts und Dateispeicherhärtung |
+| Native Dienste / Speicher | 29 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Verbindungslimits/Timeouts und Dateispeicherhärtung |
+| Daemon-Laufzeit | 9 Tests; serialisierte Geräteauswahl, frische Inventare, Sleep-/Session-Grenzen, eingefrorene Snapshots und begrenzte Befehlsübergabe |
 | Sperrkurzbefehl | 4 Mock-Tests; öffentlicher Control–Command–Q-Adapter, Berechtigungs-/Sitzungsprüfung und Tastaturlayout-Auflösung |
 | Hardware-Probe | 8 Tests; passive Diagnose, bereinigte Reports, keine echten Aktionen |
 | App und eingebettete Helfer | Debug-/Release-Builds; Selbstdiagnosen, Signatur- und Importprüfung; feste Launch-Definitionen |
 
-Die **127 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
+Die **137 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
 
 ## So ist der Killswitch vorgesehen
 
@@ -47,7 +48,7 @@ Der gemeinsame lokale/CI-Ablauf testet die Packages, baut drei Targets in Debug 
 packages/PullockCore/      Deterministischer Zustand und separates Simulationsprodukt
 packages/PullockUSB/       Passiver USB-Watcher und aktuelle Verbindungsauswahl
 packages/PullockIPC/       Nachrichten, Signaturen, Rollen und Limits
-packages/PullockServices/  Nativer Health-Transport und gesicherter Policy-Store
+packages/PullockServices/  XPC, Policy-Store und getrenntes Daemon-Laufzeitprodukt
 packages/PullockActions/   Öffentlicher Sperrkurzbefehl, ausdrücklich ausgelöst
 apps/macos/               SwiftUI-App, Agent, Daemon und Launch-Definitionen
 tools/hardware-harness/  Passiver Hardware-Probe
@@ -59,7 +60,7 @@ Details: [Entwicklung](docs/development.md), [M4-/M5-Nachweis](docs/test-reports
 
 ## Architektur und Grenzen
 
-Die geplante Schutzkette trennt Oberfläche, sitzungsspezifischen Aktionsagenten und autoritativen Daemon. Die integrierten Entwicklungsdienste bieten derzeit ausschließlich authentifizierte Zustandsdiagnose. Ihre Registrierung erfolgt nur über einen ausdrücklichen UI-Schritt und die macOS-Freigabe. Ein registrierter oder erreichbarer Dienst bedeutet noch keinen funktionierenden Schutz.
+Die Schutzkette trennt Oberfläche, sitzungsspezifischen Aktionsagenten und autoritativen Daemon. Der Entwicklungsdaemon beobachtet USB, Power und Konsolensitzung und bestätigt die flüchtige Geräteauswahl über authentifiziertes XPC. Ein geschlossenes Auswahlfenster stoppt diese Beobachtung nicht. Die separate lokale USB-Diagnose bleibt ohne Dienstinstallation verfügbar. Die Registrierung erfolgt nur über einen ausdrücklichen UI-Schritt und die macOS-Freigabe. Automatische Aktionen bleiben deaktiviert; ein registrierter oder erreichbarer Dienst bedeutet noch keinen funktionierenden Schutz.
 
 - IORegistry-Terminierung beweist das Ende einer beobachteten Verbindung, nicht den mechanischen Grund. Hub-/Bus-Resets können dieselbe Wirkung haben.
 - Der Systemkurzbefehl setzt Eingabeberechtigung, geeignete Sitzung und Tastaturkonfiguration voraus. Umkonfigurierte Systemshortcuts und Systemstörungen müssen praktisch berücksichtigt werden.
@@ -67,7 +68,7 @@ Die geplante Schutzkette trennt Oberfläche, sitzungsspezifischen Aktionsagenten
 - Root-/Kernel-Kompromittierung, vollständig eingefrorene Rechner und kompromittierter vertrauenswürdiger Code liegen außerhalb einer durchsetzbaren Schutzgarantie.
 - Optionaler Shutdown bleibt ein später zu qualifizierender Modus. Er ist derzeit nicht implementiert oder getestet; ein Live-Shutdown wird durch keinen Build-/Testbefehl ausgelöst.
 
-Vor Freigabe fehlen die durchgängige automatische Agent-/Daemon-Aktionskette, reale Removal-/Lock-/Power-/Session-Tests, Installation/Update/Uninstall, Developer-ID-Signierung, Notarisierung und Gatekeeper-Prüfung. Ein Apple-Developer-Zugang ist vorhanden; seine Einrichtung in Xcode wurde begonnen.
+Vor Freigabe fehlen die durchgängige automatische Agent-/Daemon-Aktionskette, reale Removal-/Lock-/Power-/Session-Tests und Installation/Update/Uninstall. Der direkte Xcode-Export des bisherigen Testarchivs wurde mit Developer-ID-Signierung, akzeptierter Notarisierung, gültigem Ticket und Gatekeeper-Akzeptanz unabhängig bestätigt. Der neueste Funktionsstand muss diesen Distributionsweg ebenfalls durchlaufen. Der Kommandozeilenexport meldet weiterhin `No Accounts`; die funktionierende Xcode-Anmeldung wurde bestätigt.
 
 ## Website und Distribution
 

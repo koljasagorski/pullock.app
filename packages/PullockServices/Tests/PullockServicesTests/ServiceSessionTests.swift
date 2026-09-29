@@ -70,3 +70,18 @@ private func snapshot(_ boot: UUID, at now: UInt64 = 0) throws -> StateSnapshot 
     #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.request(JSONSerialization.data(withJSONObject: object)) }
     #expect(throws: WireError.tooLarge) { try BootstrapCodec.request(Data(repeating: 0, count: 513)) }
 }
+
+@Test func authoritativeHealthCanRecoverAnExpiredCachedClientLease() throws {
+    let boot = UUID(), old = try snapshot(boot), fresh = try snapshot(boot, at: 4_000)
+    var session = try ServiceSession(bootID: boot, role: .app)
+    _ = try session.receive(BootstrapCodec.encode(BootstrapRequest()), now: 0, snapshot: old)
+    let hello = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 1, payload: .hello(role: .app))
+    _ = try session.receive(WireCodec.encode(hello), now: 0, snapshot: old)
+    let health = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 2, payload: .getHealth)
+    let reply = try WireCodec.decode(session.receive(WireCodec.encode(health), now: 4_000, snapshot: old, command: { _ in
+        .snapshot(state: fresh)
+    }))
+    #expect(reply.payload == .snapshot(state: fresh))
+    let next = WireEnvelope(connectionID: session.id, bootID: boot, sequence: 3, payload: .getHealth)
+    #expect(throws: WireError.staleSnapshot) { try session.receive(WireCodec.encode(next), now: 4_001, snapshot: old) }
+}

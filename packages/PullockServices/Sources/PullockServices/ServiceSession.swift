@@ -39,10 +39,17 @@ public struct ServiceSession: Sendable {
                 switch payload {
                 case .hello: response = .hello(role: .daemon)
                 case .getHealth:
-                    guard snapshot.bootID == bootID, snapshot.generatedAt <= now, now < snapshot.validUntil else {
-                        throw WireError.staleSnapshot
+                    if let command {
+                        // An authoritative host must be allowed to process the
+                        // returning client's heartbeat before issuing a fresh
+                        // snapshot. A stale cached view is never sent instead.
+                        response = try command(payload)
+                    } else {
+                        guard snapshot.bootID == bootID, snapshot.generatedAt <= now, now < snapshot.validUntil else {
+                            throw WireError.staleSnapshot
+                        }
+                        response = .snapshot(state: snapshot)
                     }
-                    response = try command?(payload) ?? .snapshot(state: snapshot)
                 default:
                     guard let command else { throw ServiceSessionError.operationUnavailable }
                     response = try command(payload)

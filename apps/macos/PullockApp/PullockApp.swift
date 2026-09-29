@@ -47,11 +47,16 @@ enum DevelopmentEntry {
 }
 
 struct PullockDevelopmentApp: App {
+    @State private var services = ServiceInspector()
     var body: some Scene {
         WindowGroup("Pullock Development · USB", id: "devices") {
-            USBInspectorView().frame(minWidth: 820, minHeight: 560)
+            DaemonDevicesView().environment(services).frame(minWidth: 820, minHeight: 560)
         }
         .defaultSize(width: 980, height: 680)
+        WindowGroup("Pullock Development · Local USB inspection", id: "local-usb") {
+            USBInspectorView().frame(minWidth: 820, minHeight: 560)
+        }
+        .defaultLaunchBehavior(.suppressed)
         WindowGroup("Pullock Development", id: "simulation") {
             SimulationView()
                 .frame(minWidth: 820, minHeight: 560)
@@ -63,7 +68,7 @@ struct PullockDevelopmentApp: App {
         }
         .defaultLaunchBehavior(.suppressed)
         WindowGroup("Pullock Development · Services", id: "services") {
-            ServiceInspectorView().frame(minWidth: 720, minHeight: 560)
+            ServiceInspectorView().environment(services).frame(minWidth: 720, minHeight: 560)
         }
         .defaultLaunchBehavior(.suppressed)
         MenuBarExtra("Pullock · No protection", systemImage: "lock.slash") {
@@ -77,6 +82,7 @@ private struct DevelopmentMenu: View {
     var body: some View {
         Text("DEVELOPMENT · No protection")
         Button("Choose USB connection") { openWindow(id: "devices") }
+        Button("Local USB inspection") { openWindow(id: "local-usb") }
         Button("Open simulations") { openWindow(id: "simulation") }
         Button("Diagnostic services") { openWindow(id: "services") }
         Button("Test screen lock…") { openWindow(id: "lock-test") }

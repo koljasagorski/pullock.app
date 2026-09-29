@@ -69,7 +69,7 @@ def main():
     if exported.returncode:
         text = (output / "export.log").read_text()
         if "No Accounts" in text:
-            raise SystemExit("Developer ID export blocked: sign in to the Developer account in Xcode Settings > Accounts")
+            raise SystemExit("Developer ID export blocked: xcodebuild reports 'No Accounts'. If Xcode is already signed in, check the selected team and try this archive in Xcode Organizer; this error alone does not establish that the GUI is signed out.")
         if 'No signing certificate "Developer ID Application" found' in text:
             raise SystemExit("Developer ID export blocked: configure Developer ID Application in Xcode's certificate manager")
         raise SystemExit("Developer ID export failed; inspect the private export.log locally")

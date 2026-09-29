@@ -14,9 +14,9 @@ public struct ServicePeer: Sendable {
 }
 public typealias ServiceCommandHandler = @Sendable (ServicePeer, WirePayload, UInt64) throws -> WirePayload
 
-/// Real NSXPC transport, deliberately restricted to non-sensitive hello/health.
-/// It does not expose configuration, USB injection or actions. The owner provider
-/// belongs to the trusted host; a client never supplies its policy.
+/// Authenticated NSXPC transport with a health-only default. A trusted host may
+/// supply a role-constrained command handler; no wire command injects USB events.
+/// The owner provider belongs to the host, never the client.
 public final class NativeHealthListener: NSObject, NSXPCListenerDelegate, @unchecked Sendable {
     private struct State {
         var channels: [UUID: HealthChannel] = [:]

@@ -5,8 +5,8 @@ import Synchronization
 
 public enum HealthClientError: String, Error, Sendable { case disconnected, busy, transport, timeout, invalidReply, wrongServerUser }
 
-/// One actor serializes the wire sequence. The only application operation is a
-/// non-sensitive health read. OS signing requirements apply before activation.
+/// One actor serializes the wire sequence. The server enforces each connection's
+/// fixed role. OS signing requirements apply before activation.
 public actor NativeHealthClient {
     private let connection: NSXPCConnection
     private let role: ProcessRole
