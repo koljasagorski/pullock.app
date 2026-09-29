@@ -6,7 +6,7 @@ Pullock soll einen bereits vorhandenen USB-Security-Key zum physischen Auslöser
 
 Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account und ohne Cloud-Abhängigkeit. Der erste Fokus liegt auf YubiKeys; die vorhandene FIDO2-, WebAuthn-, Passkey-, PIV-, OTP- und SSH-Nutzung soll beim Monitoring unbeeinträchtigt bleiben.
 
-> **Projektstatus: M3 — passive USB-Beobachtung und Enrollment-Prüfung implementiert.** Zustandskern, IPC-Verträge, eine native Diagnose-/Simulations-App und Agent-/Daemon-Hüllen sind vorhanden. **70 Tests sowie Debug-/Release-Builds bestehen lokal.** Es gibt noch keinen Live-Schutz, Download oder Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates. Siehe [M3-Bericht](docs/test-reports/M3.md) und [Entwicklungsleitfaden](docs/development.md).
+> **Projektstatus: M3 — passive USB-Beobachtung und Enrollment-Prüfung implementiert.** Zustandskern, IPC-Verträge, eine native Diagnose-/Simulations-App und Agent-/Daemon-Hüllen sind vorhanden. **83 Tests sowie Debug-/Release-Builds bestehen lokal.** M4-Rollen- und Verbindungsregeln sind vorbereitet; die Dienstintegration steht aus. Es gibt noch keinen Live-Schutz, Download oder Website. Sperrweg und dauerhafte Key-Identität bleiben offene Gates. Siehe [M3-Bericht](docs/test-reports/M3.md) und [Entwicklungsleitfaden](docs/development.md).
 
 ## Inhalt
 
@@ -32,9 +32,9 @@ Geplant als native macOS-App in Swift, SwiftUI und AppKit. Lokal, ohne Account u
 | --- | --- |
 | Architektur, Threat Model, Sicherheitsentscheidungen | In [PLAN.md](PLAN.md) ausgearbeitet; Start von M1 freigegeben |
 | Native macOS-App | SwiftUI-Entwicklungs-App mit passiver Geräteansicht und sechs bezeichneten Simulationen; produktive Oberfläche offen |
-| Zustandskern / IPC-Vertrag | Swift-Packages mit 47 Tests; echte XPC-Authentisierung folgt in M4 |
+| Zustandskern / IPC-Vertrag | Swift-Packages mit 60 Tests; Signatur-/Rollen-/Verbindungsregeln vorbereitet, echte XPC-Dienstintegration offen |
 | Agent / Daemon | Kompilierbare Entwicklungshüllen, keine installierten Dienste |
-| Native CI | Sicherer Build-/Test-Workflow; M2-Lauf auf GitHub erfolgreich |
+| Native CI | Sicherer Build-/Test-Workflow; M2- und M3-Läufe auf GitHub erfolgreich |
 | USB- und Geräteidentifikation | Gemeinsamer IOKit-Watcher und strikte Enrollment-Prüfung; früher erkannter Key ohne passive Seriennummer; Hardwarequalifikation offen |
 | Sofortige Sitzungssperre | Öffentliche API-/SDK-Prüfung und ungefährlicher Preflight; tragfähiger Lock-/Bestätigungspfad weiterhin offen |
 | Privilegierter Shutdown | Systemweg bewertet, noch nicht implementiert oder praktisch getestet |
@@ -279,7 +279,7 @@ Latenzmessungen unterscheiden mechanisches Abziehen, OS-Event, Triggerentscheid,
 
 Diagnostics bleiben lokal. Ein bewusst exportierter Report soll Versionen, Health-Ursachen und bereinigte Ereignisse enthalten, jedoch keine Credentials, PINs oder unmaskierten Gerätekennungen. Es gibt keinen geplanten automatischen Upload.
 
-**M1/M2: 55 Swift-Tests bestanden** (36 Kern-, 11 IPC-, 8 Probe-Tests), außerdem Debug-/Release-Builds, native Selbstprüfungen und die bereits dokumentierten passiven M1-Beobachtungen. Die Tests betreffen die Diagnose, nicht eine fertige Schutzanwendung. Hardwarequalifikation, tatsächliche Sitzungssperre und Shutdown sind damit nicht nachgewiesen. Die [M1-](docs/test-reports/M1.md) und [M2-Berichte](docs/test-reports/M2.md) enthalten ausgeführte Befehle, Befunde und offene Prüfungen.
+**83 Swift-Tests bestanden** (36 Kern-, 24 IPC-, 15 USB-, 8 Probe-Tests), außerdem Debug-/Release-Builds, native Selbstprüfungen und die bereits dokumentierten passiven M1-Beobachtungen. Die Tests betreffen die Diagnose, nicht eine fertige Schutzanwendung. Hardwarequalifikation, tatsächliche Sitzungssperre und Shutdown sind damit nicht nachgewiesen. Die Berichte zu [M1](docs/test-reports/M1.md), [M2](docs/test-reports/M2.md), [M3](docs/test-reports/M3.md) und der [M4-Vorbereitung](docs/test-reports/M4-preparation.md) enthalten Befunde und offene Prüfungen.
 
 ## Roadmap
 
@@ -288,8 +288,8 @@ Diagnostics bleiben lokal. Ein bewusst exportierter Report soll Versionen, Healt
 | M0 | Architekturplan, ausführliche README, GitHub-Synchronisierung | Plan für den Start von M1 freigegeben |
 | M1 | Lock-, Identitäts-, USB-/Power-Machbarkeit | Diagnosewerkzeug und Tests vorhanden; Lock-/Identitäts-Gates offen |
 | M2 | Zustandskern und sichere Testbasis | Implementiert; 55 sichere Tests und native Builds lokal bestanden |
-| M3 | USB-Watcher und Enrollment | Geplant |
-| M4 | SMAppService, authentifiziertes XPC und Health | Geplant |
+| M3 | USB-Watcher und Enrollment | Software implementiert; reale Hardwarequalifikation offen |
+| M4 | SMAppService, authentifiziertes XPC und Health | Rollen-/Verbindungsregeln vorbereitet; Listener, Dienste und Systemtests offen |
 | M5 | Qualifizierte Sitzungssperre | Geplant, Release-Gate |
 | M6 | Optionaler privilegierter Shutdown | Geplant, abhängig von M5 |
 | M7 | Native Oberfläche, Overlay und App-Grafiken | Geplant |

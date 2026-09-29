@@ -10,7 +10,7 @@ Lokal geprüft: Apple Silicon, macOS 27.0, Xcode 27.0 und Swift 6.4. XcodeGen 2.
 bash tools/validation/check.sh
 ```
 
-Der Befehl testet `PullockCore`, `PullockUSB`, `PullockIPC` und den Hardware-Probe (insgesamt 70 Tests), baut die drei nativen Targets in Debug und Release und prüft deren Selbstdiagnose, Signatur sowie direkte Imports gefährlicher Aktionsfunktionen. Er registriert keine Dienste, startet keine GUI und führt keine echten Hardware-, Lock- oder Shutdown-Tests aus.
+Der Befehl testet `PullockCore`, `PullockUSB`, `PullockIPC` und den Hardware-Probe (insgesamt 83 Tests), baut die drei nativen Targets in Debug und Release und prüft deren Selbstdiagnose, Signatur sowie direkte Imports gefährlicher Aktionsfunktionen. Er registriert keine Dienste, startet keine GUI und führt keine echten Hardware-, Lock- oder Shutdown-Tests aus.
 
 Build-Artefakte werden in einem neuen temporären Verzeichnis abgelegt; der Pfad wird ausgegeben. Das vermeidet Finder-/File-Provider-Metadaten, die lokal die Testbundle-Signierung im Projektordner gestört haben. Ein vorhandenes **eigenes** Buildverzeichnis lässt sich mit `PULLOCK_VALIDATION_ROOT` wiederverwenden.
 

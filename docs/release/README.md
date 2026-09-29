@@ -22,7 +22,7 @@ Das Ergebnis heißt ausdrücklich `PullockDevelopment`, enthält **keinen Live-S
 | --- | --- |
 | USB-Identität und reale Wiedererkennung | Strikte Prüfung implementiert; früher angeschlossener Key ohne passive Seriennummer; Hardware-/Produktentscheidung offen |
 | Sitzungssperre und ehrliches Erfolgskriterium | Kein qualifizierter Adapter; keine echten Lock-Tests |
-| Dienste, authentifiziertes XPC, sichere Konfiguration | Entwicklungs-Hüllen und Nachrichtenvertrag; M4 noch offen |
+| Dienste, authentifiziertes XPC, sichere Konfiguration | Entwicklungs-Hüllen, Nachrichtenvertrag und Verbindungsregeln; M4-Systemintegration noch offen |
 | Power, Session, Koexistenz, Fehlerszenarien | Modelltests vorhanden; reale Matrix offen |
 | UI, Installation, Update und Uninstall | Entwicklungsfenster; Produktabnahme offen |
 | Developer ID Application / Installer | Lokal bisher kein Developer-ID-Application-Signierer gefunden; keine Distributionssignierung |
