@@ -8,11 +8,23 @@ public struct USBDevice: Equatable, Sendable {
     public let productID: UInt16
     public let serial: SerialEvidence
     public let serialDescriptorIndex: UInt8?
+    public let displayName: String?
 
     public init(instance: UInt64, vendorID: UInt16, productID: UInt16,
-                serial: SerialEvidence, serialDescriptorIndex: UInt8? = nil) {
+                serial: SerialEvidence, serialDescriptorIndex: UInt8? = nil, displayName: String? = nil) {
         self.instance = instance; self.vendorID = vendorID; self.productID = productID
         self.serial = serial; self.serialDescriptorIndex = serialDescriptorIndex
+        self.displayName = Self.safeDisplayName(displayName)
+    }
+
+    static func safeDisplayName(_ value: Any?) -> String? {
+        guard let text = value as? String, text.utf8.count <= 256 else { return nil }
+        let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty, !clean.unicodeScalars.contains(where: {
+            CharacterSet.controlCharacters.contains($0) || CharacterSet.illegalCharacters.contains($0)
+                || (0x202A...0x202E).contains($0.value) || (0x2066...0x2069).contains($0.value)
+        }) else { return nil }
+        return clean
     }
 
     public var observation: DeviceObservation {
@@ -37,7 +49,7 @@ public enum DescriptorError: String, Error, Sendable { case invalidInstance, inv
 public enum USBDescriptorParser {
     public static let serialKeys = [kUSBHostDevicePropertySerialNumberString, "USB Serial Number"]
     public static var propertyKeys: [String] {
-        [kUSBVendorID, kUSBProductID, kUSBHostDevicePropertySerialNumberStringIndex] + serialKeys
+        [kUSBVendorID, kUSBProductID, kUSBHostDevicePropertySerialNumberStringIndex, "USB Product Name"] + serialKeys
     }
 
     public static func parse(instance: UInt64, properties: [String: Any]) throws -> USBDevice {
@@ -54,6 +66,7 @@ public enum USBDescriptorParser {
             index = byte
         }
         return USBDevice(instance: instance, vendorID: vendor, productID: product,
-            serial: SerialEvidence.read(properties, keys: serialKeys), serialDescriptorIndex: index)
+            serial: SerialEvidence.read(properties, keys: serialKeys), serialDescriptorIndex: index,
+            displayName: USBDevice.safeDisplayName(properties["USB Product Name"]))
     }
 }

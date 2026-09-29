@@ -108,7 +108,7 @@ public enum StateIssue: Equatable, Codable, Sendable {
     case missingHealth(HealthComponent), staleHealth(HealthComponent), unhealthy(HealthComponent)
     case lockUnqualified, shutdownUnqualified, shutdownNotAcknowledged
     case duplicateIdentity, unknownProduct, invalidDevice, inventoryMismatch, inventoryOverflow
-    case watcherRestarted, sessionChanged, recoveryRequired, monotonicClockFailure
+    case watcherRestarted, sessionChanged, recoveryRequired, monotonicClockFailure, selectionExpired
 }
 
 public struct StateSnapshot: Equatable, Codable, Sendable {

@@ -24,6 +24,7 @@ public struct ProtectionReducer: Sendable {
     private var recoveryRequired = false
     private var fallbackRequested = false
     private var resumeAfterSleep = false
+    private var selectionExpired = false
     private var power: PowerPhase = .awake
     private var session: SessionCondition = .unknown
     private var status: ProtectionStatus = .error
@@ -112,6 +113,7 @@ public struct ProtectionReducer: Sendable {
 
     private var matching: [DeviceObservation] {
         guard let policy else { return [] }
+        if policy.enrollment.connection != nil && selectionExpired { return [] }
         return devices.values.filter(policy.enrollment.matches)
     }
 
@@ -119,6 +121,7 @@ public struct ProtectionReducer: Sendable {
         guard let policy else { return [] }
         let claims = devices.values.filter(policy.enrollment.claimsIdentity)
         var reasons: [StateIssue] = []
+        if policy.enrollment.connection != nil && selectionExpired { reasons.append(.selectionExpired) }
         if claims.count > 1 { reasons.append(.duplicateIdentity) }
         if claims.contains(where: { !policy.enrollment.acceptedProductIDs.contains($0.productID) }) {
             reasons.append(.unknownProduct)
@@ -155,13 +158,23 @@ public struct ProtectionReducer: Sendable {
             let previous = policy?.revision ?? 0
             guard previous < UInt64.max, candidate.revision == previous + 1 else { return .revisionConflict }
             do { try candidate.validate() } catch { return .invalidPolicy }
+            if let connection = candidate.enrollment.connection {
+                guard connection.bootID == bootID, connection.watcher == watcherEpoch,
+                      connection.power == powerEpoch, power == .awake, session == .activeOwner,
+                      devices.values.contains(where: candidate.enrollment.matches) else { return .invalidPolicy }
+            }
             policy = candidate
+            selectionExpired = false
         case let .arm(expectedRevision):
             guard trigger == nil else { return .triggerLatched }
             guard let policy else { return .noPolicy }
             guard policy.revision == expectedRevision else { return .revisionConflict }
             guard !armIntent || recoveryRequired else { return .alreadyArmed }
             guard session == .activeOwner else { return .inactiveSession }
+            if let connection = policy.enrollment.connection {
+                guard !selectionExpired, connection.bootID == bootID, connection.watcher == watcherEpoch,
+                      connection.power == powerEpoch, power == .awake else { return .invalidPolicy }
+            }
             armingEpoch += 1
             armIntent = true
             clearPresence()
@@ -208,6 +221,8 @@ public struct ProtectionReducer: Sendable {
                 fail(.invalidDevice); return nil
             }
             let inventory = Dictionary(uniqueKeysWithValues: observations.map { ($0.instance, $0) })
+            if let enrollment = policy?.enrollment, enrollment.connection != nil,
+               !inventory.values.contains(where: enrollment.matches) { selectionExpired = true }
             if let bound, inventory[bound.instance] != bound { fail(.inventoryMismatch) }
             devices = inventory
             awaitingInventory = false
@@ -226,6 +241,7 @@ public struct ProtectionReducer: Sendable {
         case let .removed(instance, incomingEpoch):
             guard incomingEpoch == epoch else { return .staleEpoch }
             devices.removeValue(forKey: instance)
+            if policy?.enrollment.connection?.instance == instance { selectionExpired = true }
             if trigger == nil, armIntent, seen, bound?.instance == instance,
                power == .awake, session == .activeOwner {
                 let id = TriggerID(boot: bootID, arming: armingEpoch)
@@ -238,6 +254,7 @@ public struct ProtectionReducer: Sendable {
         case .willSleep:
             guard power == .awake else { return .invalidPowerTransition }
             resumeAfterSleep = armIntent && seen
+            if policy?.enrollment.connection != nil { selectionExpired = true }
             power = .sleeping
             powerEpoch += 1
             clearPresence()
@@ -255,6 +272,7 @@ public struct ProtectionReducer: Sendable {
             guard condition != session else { break }
             if armIntent && seen { requestFallback(.sessionBoundary, effects: &effects) }
             if armIntent { fail(.sessionChanged) }
+            if policy?.enrollment.connection != nil { selectionExpired = true }
             session = condition
             armingEpoch += 1
             clearPresence()
@@ -275,6 +293,7 @@ public struct ProtectionReducer: Sendable {
             guard results[result.id]?.isTerminal != true else { return .invalidActionResult }
             results[result.id] = result.outcome
         case .watcherRestarted:
+            if policy?.enrollment.connection != nil { selectionExpired = true }
             if armIntent && seen { requestFallback(.healthFailure, effects: &effects) }
             if armIntent { fail(.watcherRestarted) }
             watcherEpoch += 1

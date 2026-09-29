@@ -91,7 +91,7 @@ public final class IncomingPeerGate {
 /// A single typed byte container avoids decoding attacker-chosen object graphs.
 /// The receiver must enforce WireCodec.maximumBytes BEFORE JSON decoding.
 @objc public protocol PullockXPCTransport {
-    func exchange(_ packet: NSData, reply: @escaping (NSData?) -> Void)
+    func exchange(_ packet: NSData, reply: @escaping @Sendable (NSData?) -> Void)
 }
 
 public enum PullockXPCInterface {

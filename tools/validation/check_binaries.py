@@ -1,6 +1,8 @@
 """Check development executables without opening a UI or using real system actions."""
 import json
+import hashlib
 from pathlib import Path
+import plistlib
 import subprocess
 import sys
 
@@ -12,7 +14,7 @@ binaries = {
     "daemon": products / "PullockDaemon",
 }
 forbidden = {
-    "_CGEventPost", "_CGRequestPostEventAccess", "_SACLockScreenImmediate",
+    "_SACLockScreenImmediate",
     "_IOCreatePlugInInterfaceForService", "_posix_spawn", "_posix_spawnp",
     "_reboot", "_system", "_execve", "_SMJobBless",
 }
@@ -33,8 +35,26 @@ for component, binary in binaries.items():
     symbols = subprocess.check_output(["nm", "-u", str(binary)], text=True)
     imports = {line.split()[-1] for line in symbols.splitlines() if line.strip()}
     assert not (imports & forbidden), f"{component}: forbidden imports {imports & forbidden}"
+    if component != "app":
+        assert not (imports & {"_CGEventPost", "_CGRequestPostEventAccess"}), "Only the explicit app test may request input"
     subprocess.run(["codesign", "--verify", "--strict", str(binary)], check=True, capture_output=True, timeout=10)
     print(f"PASS {component}: self-check, code signature, direct symbol audit")
+
+app = products / "PullockDevelopment.app"
+for executable in ["PullockSessionAgent", "PullockDaemon"]:
+    embedded = app / "Contents/Library/LaunchServices" / executable
+    assert hashlib.sha256(embedded.read_bytes()).digest() == hashlib.sha256((products / executable).read_bytes()).digest()
+    subprocess.run(["codesign", "--verify", "--strict", str(embedded)], check=True, capture_output=True)
+for directory, label, executable, argument in [
+    ("LaunchDaemons", "app.pullock.daemon.development", "PullockDaemon", "--serve-health"),
+    ("LaunchAgents", "app.pullock.session-agent.development", "PullockSessionAgent", "--monitor-health"),
+]:
+    definition = plistlib.loads((app / "Contents/Library" / directory / f"{label}.plist").read_bytes())
+    assert definition["Label"] == label
+    assert definition["BundleProgram"] == f"Contents/Library/LaunchServices/{executable}"
+    assert definition["ProgramArguments"] == [executable, argument]
+    assert not (set(definition) & {"Program", "UserName", "EnvironmentVariables", "StandardOutPath", "StandardErrorPath"})
+print("PASS embedded helpers: signatures, exact executable content and fixed launch definitions")
 
 # A direct-import audit supplements tests/review; it is not a proof about every
 # function in linked system frameworks or a future dynamically loaded adapter.

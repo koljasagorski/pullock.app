@@ -70,7 +70,8 @@ public enum WireCodec {
             guard let policy = fields["policy"] as? [String: Any],
                   Set(policy.keys) == ["revision", "enrollment", "mode", "shutdownAcknowledged"],
                   let enrollment = policy["enrollment"] as? [String: Any],
-                  Set(enrollment.keys) == ["id", "vendorID", "acceptedProductIDs", "serial"] else {
+                  Set(enrollment.keys) == ["id", "vendorID", "acceptedProductIDs", "serial"]
+                    || Set(enrollment.keys) == ["id", "vendorID", "acceptedProductIDs", "serial", "connection"] else {
                 throw WireError.unknownFields
             }
         }

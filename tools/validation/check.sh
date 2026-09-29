@@ -9,6 +9,8 @@ printf 'Build artifacts: %s\n' "$validation_root"
 swift test --package-path "$project_root/packages/PullockCore" --scratch-path "$validation_root/core"
 swift test --package-path "$project_root/packages/PullockUSB" --scratch-path "$validation_root/usb"
 swift test --package-path "$project_root/packages/PullockIPC" --scratch-path "$validation_root/ipc"
+swift test --package-path "$project_root/packages/PullockServices" --scratch-path "$validation_root/services"
+swift test --package-path "$project_root/packages/PullockActions" --scratch-path "$validation_root/actions"
 swift test --package-path "$project_root/tools/hardware-harness" --scratch-path "$validation_root/probe"
 
 for configuration in Debug Release; do

@@ -13,6 +13,8 @@ final class USBInspector {
     private(set) var lastEvent: Date?
     private(set) var attachedCount = 0
     private(set) var removedCount = 0
+    private(set) var selection: ConnectionSelection?
+    private(set) var selectionMessage = "Choose one connected USB device."
     @ObservationIgnored private var redactor = ReportRedactor()
     @ObservationIgnored private var watcher: USBWatcher?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -50,26 +52,37 @@ final class USBInspector {
     }
 
     func reason(for device: USBDevice) -> String {
-        switch EnrollmentReview.blocker(candidate: device.instance, inventory: devices, qualifiedProfiles: []) {
-        case .missingSerial: "No passive USB serial number. Persistent registration is unavailable."
-        case .invalidSerial: "The USB serial number is malformed. Registration is unavailable."
-        case .conflictingSerial: "USB properties report conflicting serial numbers. Registration is unavailable."
-        case .duplicateIdentity: "Multiple connected devices report the same identity. Registration is unavailable."
-        case .unqualifiedProfile: "A serial number is visible, but this hardware profile has not been qualified."
-        default: "Device identity has not been qualified for registration."
+        selected(device) ? "Selected for this connection only. Protection is not active." : "Contents and serial number are not used for selection."
+    }
+
+    func selected(_ device: USBDevice) -> Bool {
+        selection?.instance == device.instance && selection?.expired == false
+    }
+
+    func select(_ device: USBDevice) {
+        guard let watcher, ready, !sleeping, active else { return }
+        do {
+            try watcher.reconcile()
+            selection = try ConnectionSelection(instance: device.instance, inventory: watcher.inventory, watcherID: watcher.watcherID)
+            selectionMessage = "USB connection selected. Reconnect, sleep or a session change clears the selection."
+        } catch {
+            selection = nil
+            selectionMessage = "This connection is no longer available. Choose a currently connected device."
         }
     }
 
     private func beginObservation() {
         redactor = ReportRedactor()
         attachedCount = 0; removedCount = 0
-        let watcher = USBWatcher { [weak self] event in self?.receive(event) }
+        let watcher = USBWatcher(scope: .allDevices) { [weak self] event in self?.receive(event) }
         self.watcher = watcher
         do { try watcher.start() }
         catch { ready = false; devices = []; status = "USB observation failed. Restart to retry." }
     }
 
     private func endObservation() {
+        selection?.invalidate()
+        selectionMessage = "Observation ended. Select a device again when observation resumes."
         watcher?.stop()
         watcher = nil
         devices = []; ready = false
@@ -83,10 +96,19 @@ final class USBInspector {
             devices = inventory; ready = true; status = "Passive USB observation active"
         case .attached:
             attachedCount += 1; devices = watcher?.inventory ?? []
-        case .removed:
+        case let .removed(instance, _):
+            if selection?.removed(instance) == true {
+                selectionMessage = "The selected USB connection was removed. No lock was requested in this diagnostic view."
+            }
             removedCount += 1; devices = watcher?.inventory ?? []
-        case let .reconciled(inventory): devices = inventory
+        case let .reconciled(inventory):
+            devices = inventory
+            if selection != nil, let watcher {
+                do { try selection?.reconcile(inventory, watcherID: watcher.watcherID) }
+                catch { selectionMessage = "Selection expired. Choose the current USB connection again." }
+            }
         case .failed:
+            selection?.invalidate()
             ready = false; devices = []; status = "USB observation failed. Restart to retry."
         case .stopped: ready = false; devices = []
         }
@@ -114,8 +136,8 @@ struct USBInspectorView: View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("DEVELOPMENT · NO PROTECTION").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                Text("Connected security keys").font(.largeTitle.weight(.semibold))
-                Text("Inspect the USB properties macOS provides. This app cannot lock or shut down your Mac.")
+                Text("Choose a USB connection").font(.largeTitle.weight(.semibold))
+                Text("Choose the device whose removal will act as your switch. Selection currently tests detection; automatic protection is not yet available.")
                     .foregroundStyle(.secondary)
             }
             Divider()
@@ -126,25 +148,27 @@ struct USBInspectorView: View {
             }
             ScrollView {
                 if inspector.devices.isEmpty {
-                    ContentUnavailableView(inspector.ready ? "No Yubico USB device visible" : "No current device inventory",
-                        systemImage: "key.horizontal", description: Text("Connect your key and allow the accessory in macOS if prompted."))
+                    ContentUnavailableView(inspector.ready ? "No USB device visible" : "No current device inventory",
+                        systemImage: "cable.connector", description: Text("Connect your USB device and allow the accessory in macOS if prompted."))
                         .frame(maxWidth: .infinity, minHeight: 180)
                 }
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(inspector.devices, id: \.instance) { device in
                         GroupBox {
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Yubico USB device").font(.headline)
+                                Text(device.displayName ?? "USB device").font(.headline)
                                 Text(String(format: "USB %04X:%04X · Instance %@", device.vendorID, device.productID, inspector.token(for: device)))
                                     .font(.callout.monospaced()).foregroundStyle(.secondary)
                                 Text(inspector.reason(for: device)).fixedSize(horizontal: false, vertical: true)
-                                Text("Not registered").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                                Button(inspector.selected(device) ? "Selected" : "Select this connection") { inspector.select(device) }
+                                    .disabled(!inspector.ready || inspector.selected(device))
                             }
                             .frame(maxWidth: .infinity, alignment: .leading).padding(8)
                         }
                     }
                 }
             }
+            Text(inspector.selectionMessage).font(.callout).foregroundStyle(.secondary)
             HStack(spacing: 20) {
                 Text("Since observation started: \(inspector.attachedCount) attached · \(inspector.removedCount) removed")
                 Spacer()
@@ -155,10 +179,11 @@ struct USBInspectorView: View {
             .font(.caption).foregroundStyle(.secondary)
             Divider()
             HStack {
-                Text("No device commands or configuration changes. Instance labels change when observation restarts.")
+                Text("Device contents are never opened. Selection expires when this observation ends.")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button("Open simulations") { openWindow(id: "simulation") }
+                Button("Test screen lock…") { openWindow(id: "lock-test") }
             }
         }
         .padding(28)

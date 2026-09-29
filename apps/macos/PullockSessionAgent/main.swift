@@ -1,11 +1,38 @@
 import Foundation
 import PullockCore
 import PullockIPC
+import PullockServices
 
-// M2 development executable only. No listener, background registration, or lock
-// adapter. A future signed M4 target must authenticate both sides before IPC.
-guard CommandLine.arguments.dropFirst().isEmpty || CommandLine.arguments.dropFirst() == ["--self-check"] else {
-    print("Usage: PullockSessionAgent [--self-check]; development shell only")
+let arguments = Array(CommandLine.arguments.dropFirst())
+if arguments == ["--monitor-health"] {
+    guard geteuid() != 0 else { exit(78) }
+    do {
+        let trust = try ServiceTrust.developmentPeer(role: .daemon)
+        Task {
+            while !Task.isCancelled {
+                do {
+                    let client = try NativeHealthClient(trust: trust, clientRole: .sessionAgent)
+                    do {
+                        try await client.connect()
+                        while !Task.isCancelled {
+                            _ = try await client.health()
+                            try await Task.sleep(for: .seconds(1))
+                        }
+                    } catch { /* No action fallback exists in this diagnostic build. */ }
+                    await client.close()
+                } catch { /* Retry only the same fixed, authenticated endpoint. */ }
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
+        RunLoop.main.run()
+        exit(0)
+    } catch {
+        fputs("Pullock diagnostic agent requires an Apple signing certificate.\n", stderr)
+        exit(78)
+    }
+}
+guard arguments.isEmpty || arguments == ["--self-check"] else {
+    print("Usage: PullockSessionAgent [--self-check | --monitor-health]")
     exit(64)
 }
 let capabilities = RuntimeCapabilities()

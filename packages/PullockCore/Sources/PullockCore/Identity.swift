@@ -1,7 +1,21 @@
 import Foundation
 
 public enum ValidationError: String, Error, Sendable {
-    case invalidSerial, invalidVendor, invalidProducts, invalidRevision, invalidLease
+    case invalidSerial, invalidVendor, invalidProducts, invalidRevision, invalidLease, invalidConnection
+}
+
+/// A currently attached connection, scoped to one daemon boot, watcher and
+/// power epoch. It is not a persistent hardware identity.
+public struct ConnectionIdentity: Equatable, Codable, Sendable {
+    public let bootID: UUID
+    public let watcher: UInt64
+    public let power: UInt64
+    public let instance: UInt64
+
+    public init(bootID: UUID, watcher: UInt64, power: UInt64, instance: UInt64) throws {
+        guard watcher > 0, instance > 0 else { throw ValidationError.invalidConnection }
+        self.bootID = bootID; self.watcher = watcher; self.power = power; self.instance = instance
+    }
 }
 
 public struct Enrollment: Equatable, Codable, Sendable {
@@ -10,12 +24,20 @@ public struct Enrollment: Equatable, Codable, Sendable {
     public let acceptedProductIDs: Set<UInt16>
     /// Sensitive local policy data; never included in StateSnapshot.
     public let serial: String
+    public let connection: ConnectionIdentity?
 
     public init(id: UUID, vendorID: UInt16, acceptedProductIDs: Set<UInt16>, serial: String) throws {
         self.id = id
         self.vendorID = vendorID
         self.acceptedProductIDs = acceptedProductIDs
         self.serial = serial
+        connection = nil
+        try validate()
+    }
+
+    public init(id: UUID, vendorID: UInt16, productID: UInt16, connection: ConnectionIdentity) throws {
+        self.id = id; self.vendorID = vendorID; acceptedProductIDs = [productID]
+        serial = ""; self.connection = connection
         try validate()
     }
 
@@ -23,7 +45,13 @@ public struct Enrollment: Equatable, Codable, Sendable {
         guard vendorID != 0 else { throw ValidationError.invalidVendor }
         guard !acceptedProductIDs.isEmpty, acceptedProductIDs.count <= 32,
               !acceptedProductIDs.contains(0) else { throw ValidationError.invalidProducts }
-        guard Self.isValidSerial(serial) else { throw ValidationError.invalidSerial }
+        if let connection {
+            guard serial.isEmpty, acceptedProductIDs.count == 1, connection.watcher > 0, connection.instance > 0 else {
+                throw ValidationError.invalidConnection
+            }
+        } else {
+            guard Self.isValidSerial(serial) else { throw ValidationError.invalidSerial }
+        }
     }
 
     public static func isValidSerial(_ serial: String) -> Bool {
@@ -34,11 +62,12 @@ public struct Enrollment: Equatable, Codable, Sendable {
 
     public func matches(_ device: DeviceObservation) -> Bool {
         device.vendorID == vendorID && acceptedProductIDs.contains(device.productID)
-            && device.serial == serial
+            && (connection.map { $0.instance == device.instance } ?? (device.serial == serial))
     }
 
     public func claimsIdentity(_ device: DeviceObservation) -> Bool {
-        device.vendorID == vendorID && device.serial == serial
+        if let connection { return device.instance == connection.instance }
+        return device.vendorID == vendorID && device.serial == serial
     }
 }
 

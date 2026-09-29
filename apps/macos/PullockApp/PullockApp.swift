@@ -58,6 +58,14 @@ struct PullockDevelopmentApp: App {
         }
         .defaultSize(width: 980, height: 680)
         .defaultLaunchBehavior(.suppressed)
+        WindowGroup("Pullock Development · Screen lock test", id: "lock-test") {
+            LockTestView().frame(minWidth: 680, minHeight: 500)
+        }
+        .defaultLaunchBehavior(.suppressed)
+        WindowGroup("Pullock Development · Services", id: "services") {
+            ServiceInspectorView().frame(minWidth: 720, minHeight: 560)
+        }
+        .defaultLaunchBehavior(.suppressed)
         MenuBarExtra("Pullock · No protection", systemImage: "lock.slash") {
             DevelopmentMenu()
         }
@@ -68,8 +76,10 @@ private struct DevelopmentMenu: View {
     @Environment(\.openWindow) private var openWindow
     var body: some View {
         Text("DEVELOPMENT · No protection")
-        Button("Connected security keys") { openWindow(id: "devices") }
+        Button("Choose USB connection") { openWindow(id: "devices") }
         Button("Open simulations") { openWindow(id: "simulation") }
+        Button("Diagnostic services") { openWindow(id: "services") }
+        Button("Test screen lock…") { openWindow(id: "lock-test") }
         Divider()
         Button("Quit Pullock Development") { NSApplication.shared.terminate(nil) }
     }
@@ -94,7 +104,7 @@ private struct SimulationView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Text(selected.title).font(.largeTitle.weight(.semibold))
-                    Text("Synthetic events exercise the real state reducer. This build cannot lock or shut down your Mac.")
+                    Text("Synthetic events exercise the real state reducer. Simulations never lock or shut down your Mac.")
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

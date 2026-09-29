@@ -1,6 +1,8 @@
 # Pullock — Architektur und Umsetzungsplan
 
-Stand: 29. September 2026. Status: **M3-Softwareaufbau umgesetzt, M4-Regeln vorbereitet; reale Hardwarequalifikation und M1-Lock-/Identitäts-Gates bleiben offen. Fortlaufende sichere Weiterarbeit autorisiert.**
+Stand: 29. September 2026. **M4-Dienstdiagnose integriert; flüchtige Auswahl beliebiger USB-Geräte und öffentlicher Sperrtest beauftragt und implementiert. Noch kein qualifizierter automatischer Live-Schutz.**
+
+**Aktuelle Produktentscheidung:** Der Nutzer wählt eine vorhandene USB-Verbindung, ohne Seriennummer oder Inhaltszugriff. Entfernung, Neustart, Sleep und Session-/Watcher-Wechsel erfordern erneute Auswahl. Der Nutzer hat Control–Command–Q mit macOS-Eingabeberechtigung und der ehrlichen Ergebnismeldung „Sperre angefordert“ freigegeben. [ADR 0003](docs/decisions/0003-connection-switch-and-shortcut.md) ersetzt dazu ältere Serial-/Lock-Entscheidungsgates in diesem historischen Plan. Reale Funktions-, System- und Distributionsprüfungen bleiben erforderlich.
 
 Der Auftrag „starte den plan“ hat M1 freigegeben. Das native Diagnosewerkzeug unter `tools/hardware-harness` enthält ausschließlich Mock-Aktionen. Aktueller Nachweisstand: [M1-Bericht](docs/test-reports/M1.md), [API-Entscheidungen](docs/decisions/0001-m1-feasibility.md), [Supportmatrix](docs/compatibility/M1.md). Der nachfolgende Auftrag „immer weiter“ autorisiert die sichere Weiterarbeit ohne organisatorischen Stopp an jeder Meilensteingrenze. [ADR 0002](docs/decisions/0002-safe-continuation.md) und [M2-Bericht](docs/test-reports/M2.md) dokumentieren die Umsetzung. Die folgenden Planungsannahmen bleiben historische Ausgangslage, soweit diese Fortschrittsnotizen sie aktualisieren.
 

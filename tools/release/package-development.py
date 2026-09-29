@@ -53,6 +53,10 @@ def main():
         parser.error("Unexpected version")
     subprocess.run(["python3", str(ROOT / "tools/validation/check_binaries.py"), str(products)], check=True)
     executable = app / "Contents/MacOS/PullockDevelopment"
+    signature = subprocess.run(["codesign", "--display", "--verbose=4", str(app)],
+                               check=True, capture_output=True, text=True)
+    if "Signature=adhoc" not in signature.stderr:
+        parser.error("This local packager is for the ad-hoc development build; use the signed archive workflow separately")
     architectures = subprocess.check_output(["lipo", "-archs", str(executable)], text=True).strip()
     if architectures != "arm64":
         parser.error("Unexpected development architecture")
@@ -77,7 +81,7 @@ def main():
                 archive.writestr(entry, path.read_bytes())
         manifest = {
             "schemaVersion": 1, "version": version, "buildKind": "development",
-            "protection": "unavailable", "realActions": False,
+            "protection": "unavailable", "automaticActions": False, "manualScreenLockTest": True,
             "distributionQualification": "not_qualified",
             "minimumMacOS": info.get("LSMinimumSystemVersion"), "architecture": architectures,
             "sourceTreeSHA256": source_tree_digest, "sources": sources,
@@ -87,13 +91,14 @@ def main():
         (staging / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         (staging / "READ-ME-FIRST.txt").write_text(
             "Pullock Development — LOCAL REVIEW ONLY — NO PROTECTION\n\n"
-            "This build shows passive USB diagnostics and labelled simulations.\n"
-            "It cannot lock or shut down your Mac and installs no services.\n"
+            "This build shows USB connection selection and labelled simulations.\n"
+            "It includes an explicit manual screen-lock test with macOS input permission.\n"
+            "Automatic protection and shutdown are unavailable. No service is registered automatically.\n"
             "It is ad-hoc signed, not Developer-ID signed or notarized.\n"
             "Do not disable Gatekeeper to distribute it.\n"
             "This bundle is not the finished security release.\n\n"
             "Sources and the repository's GPL-v3 license are in the source archive.\n"
-            "See docs/release/README.md and docs/test-reports/M3.md there.\n"
+            "See docs/release/README.md and docs/decisions/0003-connection-switch-and-shortcut.md there.\n"
         )
         artifacts = sorted(staging.iterdir())
         (staging / "SHA256SUMS").write_text("".join(f"{digest(path)}  {path.name}\n" for path in artifacts))

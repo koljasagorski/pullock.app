@@ -17,6 +17,8 @@ public enum USBWatcherEvent: Sendable {
     case stopped
 }
 
+public enum USBObservationScope: Sendable { case yubico, allDevices }
+
 /// Read-only physical USB observation. Main-actor isolation also works in a
 /// headless process; it is not coupled to any window or SwiftUI lifetime.
 @MainActor
@@ -30,10 +32,13 @@ public final class USBWatcher {
     private var removeIterator: io_iterator_t = 0
     private var devices: [UInt64: USBDevice] = [:]
     private let onEvent: @MainActor (USBWatcherEvent) -> Void
+    private let scope: USBObservationScope
 
     public var inventory: [USBDevice] { devices.values.sorted { $0.instance < $1.instance } }
 
-    public init(onEvent: @escaping @MainActor (USBWatcherEvent) -> Void) { self.onEvent = onEvent }
+    public init(scope: USBObservationScope = .yubico, onEvent: @escaping @MainActor (USBWatcherEvent) -> Void) {
+        self.scope = scope; self.onEvent = onEvent
+    }
 
     isolated deinit { close() }
 
@@ -114,7 +119,9 @@ public final class USBWatcher {
         guard let dictionary = IOServiceMatching("IOUSBHostDevice") else {
             throw USBWatcherFailure("create_matching_dictionary")
         }
-        (dictionary as NSMutableDictionary)[kIOPropertyMatchKey] = [kUSBVendorID: NSNumber(value: 0x1050)]
+        if scope == .yubico {
+            (dictionary as NSMutableDictionary)[kIOPropertyMatchKey] = [kUSBVendorID: NSNumber(value: 0x1050)]
+        }
         return dictionary
     }
 

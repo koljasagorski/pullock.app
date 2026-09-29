@@ -1,67 +1,57 @@
 # Native Entwicklung
 
-Die aktuelle Entwicklungsfassung enthält reine Swift-Packages, einen ungefährlichen Hardware-Probe und drei native Xcode-Targets. Es gibt keinen installierten Schutzdienst und keinen funktionsfähigen Live-Schutzmodus.
+Entwicklungsfassung 0.4.0: USB-Auswahl, Simulationen, Dienstdiagnose und ein ausdrücklich gestarteter manueller Sperrtest. Automatischer Schutz ist noch nicht verfügbar. Es wurde kein Dienst durch den Build installiert.
 
 ## Voraussetzungen und Gesamtprüfung
 
-Lokal geprüft: Apple Silicon, macOS 27.0, Xcode 27.0 und Swift 6.4. XcodeGen 2.45.4 wurde zur Projektgenerierung verwendet. Das generierte Xcode-Projekt und das Shared Scheme sind versioniert; zum Bauen wird XcodeGen nicht benötigt.
+Apple Silicon, macOS 27.x, Xcode 27 / Swift 6.4. Projektgenerierung: XcodeGen 2.45.4. Das generierte Projekt und Shared Scheme sind versioniert.
 
 ```sh
 bash tools/validation/check.sh
 ```
 
-Der Befehl testet `PullockCore`, `PullockUSB`, `PullockIPC` und den Hardware-Probe (insgesamt 83 Tests), baut die drei nativen Targets in Debug und Release und prüft deren Selbstdiagnose, Signatur sowie direkte Imports gefährlicher Aktionsfunktionen. Er registriert keine Dienste, startet keine GUI und führt keine echten Hardware-, Lock- oder Shutdown-Tests aus.
+118 Tests über Core, USB, IPC, Services, Actions und Probe, anschließend Debug-/Release-Builds der drei Targets. Selbstdiagnose, Signaturen, eingebettete Helper/Launch-Pfade und direkte Imports werden geprüft. Der echte öffentliche Eingabeadapter ist nur im App-Target für den manuellen UI-Test erlaubt; private Sperr- und Shutdown-Funktionen bleiben ausgeschlossen. Eine Importprüfung ist kein vollständiger Sicherheitsbeweis.
 
-Build-Artefakte werden in einem neuen temporären Verzeichnis abgelegt; der Pfad wird ausgegeben. Das vermeidet Finder-/File-Provider-Metadaten, die lokal die Testbundle-Signierung im Projektordner gestört haben. Ein vorhandenes **eigenes** Buildverzeichnis lässt sich mit `PULLOCK_VALIDATION_ROOT` wiederverwenden.
+Keine echten Eingaben, Berechtigungsdialoge, Dienste, Gerätebefehle oder Shutdowns im Testablauf. Anonyme lokale XPC-Verbindungen und temporäre Konfigurationsdateien sind Bestandteil der Tests. Das temporäre Buildverzeichnis vermeidet Finder-/File-Provider-Metadaten aus dem Projektpfad. Mit `PULLOCK_VALIDATION_ROOT` lässt es sich wiederverwenden.
 
-## Einzelne Targets
+## App starten
 
 ```sh
-export PULLOCK_PROBE_BUILD=$(mktemp -d "${TMPDIR%/}/pullock-development.XXXXXX")
-swift test --package-path packages/PullockCore --scratch-path "$PULLOCK_PROBE_BUILD/core"
-swift test --package-path packages/PullockIPC --scratch-path "$PULLOCK_PROBE_BUILD/ipc"
+export PULLOCK_BUILD=$(mktemp -d "${TMPDIR%/}/pullock-development.XXXXXX")
 xcodebuild -project apps/macos/Pullock.xcodeproj -scheme PullockDevelopment \
-  -configuration Debug -derivedDataPath "$PULLOCK_PROBE_BUILD/xcode" build
-open "$PULLOCK_PROBE_BUILD/xcode/Build/Products/Debug/PullockDevelopment.app"
+  -configuration Debug -derivedDataPath "$PULLOCK_BUILD/xcode" build
+open "$PULLOCK_BUILD/xcode/Build/Products/Debug/PullockDevelopment.app"
 ```
 
-Die App startet mit einer passiven USB-Geräteansicht. Sie verwendet dieselbe `PullockUSB`-Implementierung wie der Hardware-Probe und erklärt, warum ein sichtbares Gerät noch nicht registriert werden kann. Ein zweites Fenster zeigt sechs **SIMULATION**-Abläufe. Auch ein simuliertes ARMED bedeutet keinen Live-Schutz. Das Menu-Bar-Menü ist entsprechend bezeichnet; es gibt keine scheinbar funktionierenden Installations-/Arming-Schalter.
+Die Standardansicht zeigt USB-Geräte verschiedener Hersteller. „Select this connection“ wählt nur die aktuelle Verbindung; Schließen/Neustart der Diagnosebeobachtung, Sleep, Sitzungswechsel und Entfernen verwerfen sie. Das ist derzeit ein Erkennungstest, kein automatisches Arming.
 
-Ein expliziter passiver App-Snapshot ohne GUI ist über `PullockDevelopment.app/Contents/MacOS/PullockDevelopment --usb-inspect` möglich. Die normale Selbstdiagnose `--self-check` greift weiterhin nicht auf Hardware zu. Die Geräteansicht pausiert bei NSWorkspace-Sleep-/Sessionmeldungen und startet ihre Diagnosebeobachtung mit neuer Epoche; das ist noch keine qualifizierte Power-Strategie des Daemons.
+Im Menü stehen sechs bezeichnete Simulationen, Dienstdiagnose und „Test screen lock…“. Letzteres öffnet zuerst die Erklärung und Berechtigungseinrichtung. **Erst** „Lock this Mac now…“ mit anschließender Bestätigung postet eine echte Systemtastenkombination. Ein Lock-Test unterbricht die Sitzung. Das Ergebnis heißt ausschließlich „Lock requested“; entsperre normal und prüfe selbst, ob macOS tatsächlich gesperrt hat.
 
-Agent und Daemon sind kurz laufende Entwicklungshüllen:
+`--self-check` ist bei allen Binaries weiterhin harmlos. Der optionale App-Aufruf `--usb-inspect` ist die bisherige passive, auf Yubico gefilterte Diagnose; die normale Geräteauswahl verwendet dagegen alle USB-Hersteller. Rohseriennummern und Produktnamen werden nicht in diese Diagnoseausgabe aufgenommen.
+
+## Dienste
+
+Die App enthält zwei Helfer und Launch-Definitionen. Die UI registriert sie nur auf ausdrücklichen Wunsch über `SMAppService`; sie zeigt Freigabestatus getrennt vom Health-Status. Apple-Zertifikat und Installation in `/Applications` sind UI-Voraussetzungen; macOS verlangt für Apps mit LaunchDaemon zusätzlich Notarisierung und Administratorfreigabe. Nicht registrierte oder ad-hoc-signierte Entwicklungsbuilds stellen deshalb keinen Systemdienst bereit.
+
+`PullockDaemon --serve-health` ist ein expliziter root-Dienststart mit festen Rollenendpunkten. `PullockSessionAgent --monitor-health` ist ein Benutzerprozess mit begrenzter Health-Abfrage. Default/`--self-check` starten keine Listener. Kein Diagnose-Endpunkt akzeptiert Arming, Konfiguration, USB-Injektion oder Aktionen. [Dienstimplementierung](../packages/PullockServices/README.md).
+
+## Signiertes lokales Archiv
+
+Nach einer erfolgreichen Gesamtprüfung, mit genau einem verwendbaren Apple-Signierzertifikat:
 
 ```sh
-"$PULLOCK_PROBE_BUILD/xcode/Build/Products/Debug/PullockSessionAgent" --self-check
-"$PULLOCK_PROBE_BUILD/xcode/Build/Products/Debug/PullockDaemon" --self-check
+export PULLOCK_SIGNED_ROOT=$(mktemp -d "${TMPDIR%/}/pullock-signed.XXXXXX")
+python3 tools/release/archive-development.py \
+  --output "$PULLOCK_SIGNED_ROOT/review" \
+  --probe-binary "$PULLOCK_VALIDATION_ROOT/xcode/Build/Products/Release/PullockDaemon"
 ```
 
-Sie öffnen keinen Listener und installieren sich nicht bei launchd. Die Targets haben eigene `.development`-Identifier und linken keinen echten Aktionsadapter. Die Xcode-Builds verwenden ad-hoc-Signaturen; Xcode deaktiviert dabei trotz gesetztem Build-Setting die Hardened Runtime. Dies ist **kein** Developer-ID-/Distributionsnachweis. Der separat Apple-Development-signierte M1-Probe ist im [M1-Bericht](test-reports/M1.md) dokumentiert.
+`PULLOCK_VALIDATION_ROOT` muss auf das tatsächlich geprüfte Verzeichnis zeigen. Der Helfer wählt ein vorhandenes Developer-ID-Application-Zertifikat, andernfalls Apple Development; bei mehrdeutigen Identitäten bricht er ab. Er signiert einen kopierten Probe-Binary zur Ermittlung der Team-ID, **führt ihn aber nicht aus**. Logs und Exportoptionen bleiben privat im Ausgabeverzeichnis; keine Passwörter, privaten Schlüssel oder Zertifikatsexporte werden benötigt.
 
-## Projektstruktur und Generierung
+Optional `--export-developer-id` erlaubt Xcode, den Developer-ID-Export über den in Xcode eingerichteten Account vorzubereiten. Fehlt der Account, meldet der Helfer diesen konkreten Grund. Keine Notarisierung, Installation, Service-Registrierung oder GitHub-Veröffentlichung durch diesen Befehl.
 
-```text
-packages/PullockCore/  Reducer, Policy, Identität, Health; separates Simulationsprodukt
-packages/PullockIPC/   Versionierter, rollenbegrenzter Nachrichtenvertrag
-packages/PullockUSB/   Passiver IOKit-Watcher, Deskriptoren, Enrollment-Prüfung
-apps/macos/           Xcode-Projekt, Shared Scheme und drei Entwicklungs-Targets
-tools/hardware-harness/  Passiver Probe mit gemeinsamem USB-Modul und Power-Beobachtung
-tools/validation/     Gemeinsamer lokaler/CI-Prüfablauf
-tools/release/        Lokale Paketierung zur Release-Vorbereitung
-```
+## Projekt und CI
 
-Nach Änderungen an der Projektstruktur:
+Nach Strukturänderungen `xcodegen generate --spec apps/macos/project.yml` ausführen und Projektdatei sowie YAML gemeinsam versionieren. Die CI verwendet denselben Prüfablauf auf `xcode-27`, Read-only-Rechte und gepinnte Checkout-Action. Sie hat keine Signing-/Notarisierungscredentials.
 
-```sh
-xcodegen generate --spec apps/macos/project.yml
-```
-
-`project.yml` und generierte Projektdateien gemeinsam prüfen und versionieren. Referenz: [XcodeGen Project Spec](https://github.com/yonaskolb/XcodeGen/blob/master/Docs/ProjectSpec.md).
-
-## CI
-
-`.github/workflows/swift.yml` führt denselben ungefährlichen Prüfablauf für Codeänderungen aus. Er verwendet den aktuellen Apple-Silicon-Runner `xcode-27`, Read-only-Repositoryrechte und eine auf Commit-SHA fixierte Checkout-Action ohne persistierte Credentials. Die Label-/Toolchain-Auswahl basiert auf den [offiziellen Runner-Images](https://github.com/actions/runner-images#available-images) und der [Xcode-27-Imagebeschreibung](https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md).
-
-CI-Builds sind kein Hardware- oder Schutzfunktionsnachweis. Physische Keys, Power-Sequenzen, signiertes XPC, Service-Freigaben und echte Sperr-/Shutdown-Proben bleiben eigene Prüfungen.
-
-Die [Release-Vorbereitung](release/README.md) beschreibt die bereits ausführbare lokale Paketierung und die noch offenen Bedingungen für das angeforderte erste GitHub-Release.
+[Aktueller Testbericht](test-reports/M4-M5.md), [Release-Voraussetzungen](release/README.md), [XcodeGen-Spezifikation](https://github.com/yonaskolb/XcodeGen/blob/master/Docs/ProjectSpec.md), [Apple SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice).
