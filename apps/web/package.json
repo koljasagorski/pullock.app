@@ -1,0 +1,33 @@
+{
+  "name": "pullock-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && node scripts/secure-export.mjs",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint .",
+    "test": "playwright test",
+    "preview": "node scripts/serve.mjs"
+  },
+  "dependencies": {
+    "@fontsource/poppins": "5.3.0",
+    "@phosphor-icons/react": "2.1.10",
+    "next": "16.3.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.6.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.7",
+    "lighthouse": "13.5.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3"
+  }
+}

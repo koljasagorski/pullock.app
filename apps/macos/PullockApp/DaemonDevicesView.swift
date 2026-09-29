@@ -10,8 +10,12 @@ struct DaemonDevicesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("DEVELOPMENT · NO PROTECTION").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-            Text("Choose your USB switch").font(.largeTitle.weight(.semibold))
-            Text("Select the connection whose removal should request a screen lock. Automatic protection is still under development.")
+            HStack(spacing: 16) {
+                Image("PullockSymbol").resizable().scaledToFit().frame(width: 64, height: 64)
+                    .accessibilityLabel("Pullock")
+                Text("Pull the key. Lock the Device.").font(.largeTitle.weight(.semibold))
+            }
+            Text("Choose any detected compatible USB device. The planned workflow is: select a device, arm Pullock, then disconnect that device to request a screen lock. Automatic protection is still under development.")
                 .foregroundStyle(.secondary)
             HStack {
                 Button("Connect to background service") { inspector.connect() }
@@ -52,7 +56,7 @@ struct DaemonDevicesView: View {
                 }
             }
             Text(inspector.selectionMessage).font(.callout)
-            Text("Unplugging, sleep, a session change or a service restart requires a new selection. Device contents are never opened.")
+            Text("USB sticks and other observable USB devices are supported for selection. Contents are never opened. Unplugging, sleep, a session change or a service restart requires a new selection.")
                 .font(.caption).foregroundStyle(.secondary)
             if let message = inspector.message { Text(message).font(.caption).foregroundStyle(.secondary) }
         }

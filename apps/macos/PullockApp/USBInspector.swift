@@ -137,7 +137,7 @@ struct USBInspectorView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("DEVELOPMENT · NO PROTECTION").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 Text("Choose a USB connection").font(.largeTitle.weight(.semibold))
-                Text("Choose the device whose removal will act as your switch. Selection currently tests detection; automatic protection is not yet available.")
+                Text("Pullock detects USB sticks and other observable USB devices. Choose the device that should trigger a lock when disconnected after arming. This view tests detection; automatic protection is not yet available.")
                     .foregroundStyle(.secondary)
             }
             Divider()

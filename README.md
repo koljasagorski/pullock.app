@@ -1,8 +1,8 @@
 # Pullock
 
-**Choose a USB connection. Pull it to request a screen lock.**
+**Pull the key. Lock the Device.**
 
-Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch. Du wählst ein gerade angeschlossenes USB-Gerät; dessen Verbindungsende soll eine Sitzungssperre anfordern. Inhalte, Dateien und Credentials des Geräts werden nicht gelesen. Ein bestimmter Hersteller oder eine Seriennummer sind für diesen Modus nicht erforderlich.
+Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch. Die App erkennt beobachtbare, kompatible USB-Geräte verschiedener Hersteller: USB-Sticks und andere USB-Devices. Du wählst eines aus und schaltest Pullock ausdrücklich scharf; sobald genau dieses Gerät getrennt wird, soll Pullock eine Sitzungssperre anfordern. Inhalte, Dateien und Credentials des Geräts werden nicht gelesen. Ein bestimmter Hersteller oder eine Seriennummer sind für diesen Modus nicht erforderlich.
 
 > **Entwicklungsstand 0.4.0: noch kein automatischer Live-Schutz und kein öffentlicher App-Release.** Die App bietet passive Geräteauswahl, Simulationen, Dienstdiagnose und einen ausdrücklich gestarteten manuellen Sperrtest. Der Benutzer hat die Veröffentlichung der ersten qualifizierten App auf GitHub beauftragt. Ein Prototyp ersetzt diesen Release nicht.
 
@@ -12,14 +12,14 @@ Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch
 | --- | --- |
 | Zustandskern | 41 Tests; Auswahl an Boot/Watcher/Power gebunden, Health-Leases, Ereignisreihenfolge, verriegelte Trigger und getrennte Aktionsanforderungen |
 | USB-Beobachtung | 20 Tests; passiver IOKit-Watcher, aktuelle Geräte verschiedener Hersteller, Auswahl einer einzelnen Verbindung und deren sichere Invalidierung |
-| IPC | 26 Vertrag-/Signatur-/Rollen-/Budgettests |
-| Native Dienste / Speicher | 29 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Verbindungslimits/Timeouts und Dateispeicherhärtung |
+| IPC | 29 Vertrag-/Signatur-/Rollen-/Budgettests einschließlich begrenztem Sperrnachrichtenformat |
+| Native Dienste / Speicher | 31 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Verbindungslimits/Timeouts, Dateispeicherhärtung und Aktions-Deduplizierung |
 | Daemon-Laufzeit | 9 Tests; serialisierte Geräteauswahl, frische Inventare, Sleep-/Session-Grenzen, eingefrorene Snapshots und begrenzte Befehlsübergabe |
 | Sperrkurzbefehl | 4 Mock-Tests; öffentlicher Control–Command–Q-Adapter, Berechtigungs-/Sitzungsprüfung und Tastaturlayout-Auflösung |
 | Hardware-Probe | 8 Tests; passive Diagnose, bereinigte Reports, keine echten Aktionen |
 | App und eingebettete Helfer | Debug-/Release-Builds; Selbstdiagnosen, Signatur- und Importprüfung; feste Launch-Definitionen |
 
-Die **137 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
+Die **142 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
 
 ## So ist der Killswitch vorgesehen
 
@@ -72,7 +72,9 @@ Vor Freigabe fehlen die durchgängige automatische Agent-/Daemon-Aktionskette, r
 
 ## Website und Distribution
 
-Die Website ist im selben Repository unter `apps/web` mit GitHub Pages und der Zieldomain `pullock.app` geplant. Sie ist noch nicht gebaut oder veröffentlicht. Downloads werden als GitHub Releases dieses Repositorys bereitgestellt, sobald die App ihre Funktions- und Distributionsprüfungen besteht. Es gibt noch keinen Download eines fertigen Schutzprodukts.
+Die statische Next.js-Website liegt unter `apps/web`: Startseite, Ablauf, Kompatibilität, Sicherheit, Datenschutz, Support, Release-Status und Impressum. Der Nutzer hat zunächst die GitHub-Pages-Adresse `https://koljasagorski.github.io/pullock.app/` gewählt. Der Pages-Workflow prüft den Export vor jeder Veröffentlichung; die eigene Domain bleibt ein späterer Schritt. Downloads werden als GitHub Releases dieses Repositorys bereitgestellt, sobald die App ihre Funktions- und Distributionsprüfungen besteht. Es gibt noch keinen Download eines fertigen Schutzprodukts.
+
+Das vom Nutzer bereitgestellte Logo und der Slogan sind in die native App übernommen. Die [Brand-Assets](assets/brand/README.md) enthalten beide Farbschemata, App-Icons und vorbereitete Website-Favicons. Anbieter ist gemäß Nutzerangabe [patchletter UG (haftungsbeschränkt)](https://patchletter.com/de/impressum); die Daten für das Pullock-Impressum sind [dokumentiert](docs/brand-owner.md).
 
 Der lokale Review-Packager erzeugt App-/Source-Archive, Manifest und SHA-256-Prüfsummen. Er veröffentlicht nichts. Der separate Archivhelfer kann mit einem vorhandenen Apple-Zertifikat signieren und optional Xcodes Developer-ID-Export anstoßen; er führt keine Notarisierung oder Veröffentlichung aus.
 

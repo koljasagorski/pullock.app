@@ -144,7 +144,7 @@ private struct SimulationView: View {
                 Spacer(minLength: 0)
                 Divider()
                 HStack {
-                    Text("Live lock adapter and key enrollment are not qualified.")
+                    Text("The live action path and USB device selection are not qualified for protection.")
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Button("Run simulation", action: run).keyboardShortcut(.return)

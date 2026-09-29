@@ -13,7 +13,8 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-EXCLUDED = {".build", ".swiftpm", ".local", "DerivedData", "xcuserdata", "__pycache__", ".DS_Store"}
+EXCLUDED = {".build", ".swiftpm", ".local", "DerivedData", "xcuserdata", "__pycache__", ".DS_Store",
+            "node_modules", ".next", "out", "playwright-report", "test-results"}
 
 
 def digest(path):
@@ -22,10 +23,12 @@ def digest(path):
 
 def source_files():
     files = [ROOT / name for name in [".gitattributes", ".gitignore", "LICENSE", "PLAN.md", "README.md"]]
-    for directory in [".github", "apps/macos", "packages", "tools", "docs"]:
+    for directory in [".github", "apps/macos", "apps/web", "assets", "packages", "tools", "docs"]:
         for path in (ROOT / directory).rglob("*"):
             relative = path.relative_to(ROOT)
             if any(part in EXCLUDED for part in relative.parts):
+                continue
+            if path.suffix == ".tsbuildinfo" or ".sb-" in path.name:
                 continue
             if path.is_symlink():
                 raise ValueError(f"Unexpected source symlink: {relative}")

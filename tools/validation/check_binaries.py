@@ -41,6 +41,11 @@ for component, binary in binaries.items():
     print(f"PASS {component}: self-check, code signature, direct symbol audit")
 
 app = products / "PullockDevelopment.app"
+app_info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
+assert app_info.get("CFBundleIconName") == "AppIcon"
+assert (app / "Contents/Resources/AppIcon.icns").is_file()
+assert (app / "Contents/Resources/Assets.car").is_file()
+print("PASS app branding: AppIcon declaration, ICNS and asset catalog embedded")
 for executable in ["PullockSessionAgent", "PullockDaemon"]:
     embedded = app / "Contents/Library/LaunchServices" / executable
     assert hashlib.sha256(embedded.read_bytes()).digest() == hashlib.sha256((products / executable).read_bytes()).digest()

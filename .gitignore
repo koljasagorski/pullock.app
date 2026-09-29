@@ -9,3 +9,10 @@
 *.p12
 *.mobileprovision
 *.provisionprofile
+**/node_modules/
+**/.next/
+apps/web/out/
+**/playwright-report/
+**/test-results/
+*.tsbuildinfo
+*.sb-*
