@@ -22,7 +22,7 @@ Das Ergebnis heißt ausdrücklich `PullockDevelopment` und ist nur für die loka
 | --- | --- |
 | USB-Identität und reale Wiedererkennung | Nutzerentscheidung: beliebige aktuelle USB-Verbindung ohne Seriennummer auswählen; implementiert, reale Removal-Matrix offen |
 | Sitzungssperre und ehrliches Erfolgskriterium | Öffentlicher Control–Command–Q-Adapter in manuellem Test und Agent integriert; keine behauptete Sperrbestätigung, reale Tests offen |
-| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative Beobachtung/Auswahl, Policy-Store, Rückkanal, unabhängiger Lease-Watchdog und Registrierungs-UI; integrierte Mock-Kette bestanden, installierte Produktionsprüfung offen |
+| Dienste, authentifiziertes XPC, sichere Konfiguration | Autoritative Beobachtung/Auswahl, Policy-Store, Rückkanal, Lease-Watchdog und ausdrückliche Agent-Berechtigungseinrichtung; integrierte Mock-Kette bestanden. Build 4 korrigiert Helfer-Signierkennungen und prüft die exakten XPC-Anforderungen; installierte Prüfung offen |
 | Power, Session, Koexistenz, Fehlerszenarien | Modelltests vorhanden; reale Matrix offen |
 | UI, Installation, Update und Uninstall | USB-Auswahl, Diagnose- und Sperrtestfenster; Produkt-/Installationsabnahme offen |
 | Developer ID Application / Installer | Bezahltes Team in Xcode bestätigt. Direkter Organizer-Export des Testarchivs erfolgreich; App und beide Helfer mit Developer ID Application signiert. Installer nur für ein späteres PKG erforderlich |
@@ -30,6 +30,8 @@ Das Ergebnis heißt ausdrücklich `PullockDevelopment` und ist nur für die loka
 | Privater Sicherheitsmeldeweg | Vor ausführbarem öffentlichem Release festlegen und verifizieren |
 
 Diese Tabelle ist ein Nachweisstand, keine automatische Freigabe durch umgesetzte boolesche Flags. Ein erfolgreicher Paket- oder CI-Build ersetzt die fehlenden Prüfungen nicht.
+
+Aktuell vorbereitet: **0.4.1, Build 4, IPC 3**. Das Apple-Development-Archiv besteht die genauen Zertifikat-/Identifier-Anforderungen von App, Agent und Daemon. Frühere Archive enthielten abweichende Helfer-Kennungen, die trotz gültiger Signaturen den authentifizierten Verbindungsaufbau verhindern; deren Notarisierung ist kein Funktionsnachweis. Der nächste Schritt ist der Organizer-Export dieses korrigierten Archivs und die [installierte Abnahme](../test-reports/M5-live-check.md).
 
 ## Veröffentlichung nach Qualifikation
 

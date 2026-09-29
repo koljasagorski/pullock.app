@@ -64,7 +64,7 @@ def main():
         (app / "Contents/Library/LaunchServices/PullockDaemon", "app.pullock.daemon.development"),
     ]:
         requirement = f'anchor apple generic and identifier "{identifier}" and certificate leaf = H"{identity}"'
-        subprocess.run(["codesign", "--verify", "--strict", "--test-requirement", requirement, str(path)],
+        subprocess.run(["codesign", "--verify", "--strict", "--test-requirement", "=" + requirement, str(path)],
                        check=True, capture_output=True)
     print(f"Apple-signed local review archive: {archive}")
     print("Exact XPC certificate and identifier requirements passed for app and both helpers.")
