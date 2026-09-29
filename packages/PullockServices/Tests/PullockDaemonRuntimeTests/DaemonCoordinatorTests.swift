@@ -49,6 +49,77 @@ private final class Fixture {
     }
 }
 
+@Test @MainActor func permissionSetupRequiresExplicitAppRequestAndUniqueAgentRoute() throws {
+    let f = Fixture(); f.host.watcherStarted()
+    #expect(throws: AuthorityError.unavailable) { try f.request(.requestAgentPermission) }
+    f.routeAvailable = true
+    #expect(throws: AuthorityError.unauthorized) {
+        try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now, payload: .requestAgentPermission)
+    }
+    _ = try f.request(.requestAgentPermission)
+    #expect(throws: AuthorityError.unavailable) { try f.request(.requestAgentPermission) }
+    #expect(f.actions.isEmpty && !f.host.cache.load().armIntent)
+}
+
+@Test @MainActor func permissionSetupIsDeliveredOnceAndDoesNotManufactureLockReadiness() throws {
+    let f = Fixture(); f.routeAvailable = true; f.host.watcherStarted()
+    _ = try f.request(.requestAgentPermission)
+    let response = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+        payload: .sessionReadiness(generation: f.host.cache.load().healthGeneration, progress: 1, lockAvailable: false))
+    guard case let .agentPermission(id, requestedAt, expiresAt, state) = response else {
+        Issue.record("Missing explicit agent setup"); return
+    }
+    #expect(requestedAt == f.now && expiresAt == f.now + 5_000)
+    #expect(state.issues.contains(.unhealthy(.lockPath)))
+    let again = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+        payload: .sessionReadiness(generation: state.healthGeneration, progress: 2, lockAvailable: false))
+    guard case .snapshot = again else { Issue.record("Setup replayed"); return }
+    #expect(throws: AuthorityError.unauthorized) { try f.request(.agentPermissionHandled(id: id)) }
+    _ = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+        payload: .agentPermissionHandled(id: id))
+    #expect(f.host.cache.load().issues.contains(.unhealthy(.lockPath)))
+    #expect(throws: AuthorityError.unavailable) { try f.request(.requestAgentPermission) }
+    #expect(f.actions.isEmpty)
+}
+
+@Test @MainActor func permissionSetupCannotOverlapArming() throws {
+    let f = Fixture(); f.capabilities = .init(profile: .live, lock: .qualified)
+    f.routeAvailable = true; f.host.watcherStarted(); f.host.pulse()
+    let policy = try f.select(); try f.readiness(true)
+    _ = try f.request(.requestAgentPermission)
+    #expect(throws: AuthorityError.unavailable) { try f.request(.arm(expectedRevision: policy.revision)) }
+    let response = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+        payload: .sessionReadiness(generation: f.host.cache.load().healthGeneration, progress: f.now + 1, lockAvailable: true))
+    guard case let .agentPermission(id, _, _, _) = response else { Issue.record("Missing setup"); return }
+    _ = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+        payload: .agentPermissionHandled(id: UUID()))
+    #expect(throws: AuthorityError.unavailable) { try f.request(.arm(expectedRevision: policy.revision)) }
+    _ = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+        payload: .agentPermissionHandled(id: id))
+    _ = try f.request(.arm(expectedRevision: policy.revision))
+    #expect(f.host.cache.load().status == .armed)
+    #expect(throws: AuthorityError.unavailable) { try f.request(.requestAgentPermission) }
+}
+
+@Test @MainActor func pendingPermissionSetupExpiresOnTimeAndLifecycleBoundaries() throws {
+    for boundary in 0..<5 {
+        let f = Fixture(); f.routeAvailable = true; f.host.watcherStarted()
+        _ = try f.request(.requestAgentPermission)
+        switch boundary {
+        case 0: f.now += 5_000
+        case 1: f.host.lifecycle(.willSleep); f.host.lifecycle(.willWake); f.host.lifecycle(.didWake)
+        case 2: f.active = false; f.host.recheckOwner(); f.active = true
+        case 3: f.host.observationFailed(); f.host.watcherStarted()
+        default: f.routeAvailable = false
+        }
+        _ = try f.request(.getHealth)
+        let response = try f.host.command(role: .sessionAgent, uid: 501, session: 42, receivedAt: f.now,
+            payload: .sessionReadiness(generation: f.host.cache.load().healthGeneration, progress: 1, lockAvailable: false))
+        guard case .snapshot = response else { Issue.record("Invalidated setup delivered"); return }
+        #expect(f.actions.isEmpty)
+    }
+}
+
 @Test @MainActor func selectedDeviceAloneTriggersTheIntegratedHost() throws {
     let fixture = Fixture()
     fixture.capabilities = .init(profile: .simulation, lock: .mockOnly)

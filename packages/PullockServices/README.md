@@ -28,10 +28,16 @@ Tests verwenden injizierte Inventare und Uhren und prüfen Auswahl, Removal/Repl
 
 ## Integrierter Aktionspfad
 
-`sessionReadiness` in Protokoll v2 bindet steigenden Agent-Fortschritt und den lokalen Eingabe-Preflight an die aktuelle Health-Generation. Die Autorität akzeptiert ihn nur vom authentifizierten SessionAgent; der Host verlangt zusätzlich genau einen aktivierten Rückkanal derselben Owner-Sitzung. Ein App-Request oder ein alter Heartbeat kann die Lock-Fähigkeit nicht herstellen.
+`sessionReadiness` in Protokoll v3 bindet steigenden Agent-Fortschritt und den lokalen Eingabe-Preflight an die aktuelle Health-Generation. Die Autorität akzeptiert ihn nur vom authentifizierten SessionAgent; der Host verlangt zusätzlich genau einen aktivierten Rückkanal derselben Owner-Sitzung. Ein App-Request oder ein alter Heartbeat kann die Lock-Fähigkeit nicht herstellen.
 
 `LockDeliveryDriver` versendet Live-Lock-Effekte nach dem Reducer-Commit. Er prüft vor Beginn und vor Ergebnismeldung den Stopp-/Abbruchzustand, wiederholt unsichere Zustellungen nicht und akzeptiert keine erfundene Erfolgsbestätigung. Der Listener führt Host-Code außerhalb seines Kanal-Mutex aus, damit die Readiness-Transaktion ihren eigenen Rückkanal ohne Deadlock prüfen kann.
 
 `NativeLockReceiver` prüft OS-Absender, Boot, Nonce, Sequenz, Frist und Rolle erneut. Der Agent verwendet `LockActionExecutor` für Deduplizierung über Reconnect. `SessionLeaseGuard` teilt denselben Executor und kann bei Ablauf einer vorher gesunden ARMED-Lease eine Fallback-Anforderung auslösen. Lokale Sleep-/Session-Notifications verwerfen diese Lease. Neu datierte Antworten derselben Scharfschaltung reichen nicht zur Wiederaufnahme; erforderlich ist eine frische andere Boot-/Arming-Epoche. Ohne vorherige Beobachtung wird die erste nach der Grenze eintreffende Epoche vorsichtshalber ebenfalls gesperrt, bis eine neue Aktivierung beobachtet wird.
 
 47 Services- und 17 Runtime-Tests prüfen diese Regeln. Ein integrierter Test sendet Auswahl und ARM über echte anonyme, signaturgeprüfte XPC-Verbindungen und prüft anschließend Removal→Rückkanal→Mock-Ausführung→autoritative Rückmeldung. Weder dieser Test noch die Selbstdiagnose ruft CoreGraphics-Eingaben auf. Die interne Fähigkeit `.qualified` bedeutet hier lediglich, dass der bewusst aktivierte Adapter vom Reducer verwendet werden darf; sie ist kein Release- oder Hardware-Nachweis.
+
+## Ausdrückliche Berechtigungseinrichtung
+
+Die App kann im entschärften Zustand `requestAgentPermission` senden. Der Daemon hält genau einen Auftrag für höchstens fünf Sekunden und liefert ihn einmalig in einer Readiness-Antwort an den eindeutigen authentifizierten Agenten. Bis zur passenden Bestätigung oder dem Ablauf wird ARM abgewiesen. Die nächste Anfrage ist frühestens nach 30 Sekunden möglich. Eine Annahme oder Bestätigung behauptet keine erteilte Berechtigung; ausschließlich der nächste lokale Preflight bestimmt die Readiness.
+
+`SessionPermissionGate` verwirft veraltete, simulierte, scharfe und nach lokalen Sleep-/Session-Grenzen verspätete Aufträge. Auch ein neu datierter Snapshot kann einen vor der Grenze erstellten Auftrag nicht wiederbeleben. Der Agent fordert ausschließlich die eigene macOS-Eingabeberechtigung an, ohne Tastenevents. Beim Login, Reconnect, Build oder Selbsttest wird kein Dialog angefordert. Die tatsächliche TCC-Zuordnung und Darstellung bleiben am installierten signierten Build zu prüfen.

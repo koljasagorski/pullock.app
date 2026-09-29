@@ -15,6 +15,9 @@ public enum WirePayload: Equatable, Codable, Sendable {
     case sessionHeartbeat(generation: UInt64, progress: UInt64)
     case sessionReadiness(generation: UInt64, progress: UInt64, lockAvailable: Bool)
     case enableLockDelivery(nonce: UUID)
+    case requestAgentPermission
+    case agentPermission(id: UUID, requestedAt: UInt64, expiresAt: UInt64, state: StateSnapshot)
+    case agentPermissionHandled(id: UUID)
     case lockResult(result: ActionResult)
     case performLock(id: ActionID)
     case snapshot(state: StateSnapshot)
@@ -41,7 +44,7 @@ public struct WireDevice: Equatable, Codable, Sendable {
 }
 
 public struct WireEnvelope: Equatable, Codable, Sendable {
-    public static let currentVersion = 2
+    public static let currentVersion = 3
     public let version: Int
     public let connectionID: UUID
     public let bootID: UUID
@@ -87,6 +90,8 @@ public enum WireCodec {
             "sessionHeartbeat": ["generation", "progress"], "lockResult": ["result"],
             "sessionReadiness": ["generation", "progress", "lockAvailable"],
             "enableLockDelivery": ["nonce"],
+            "requestAgentPermission": [], "agentPermission": ["id", "requestedAt", "expiresAt", "state"],
+            "agentPermissionHandled": ["id"],
             "performLock": ["id"], "snapshot": ["state"],
         ]
         guard let allowed = shapes[entry.key], Set(fields.keys).isSubset(of: allowed) else {
@@ -118,7 +123,8 @@ public enum WireCodec {
                     let nullable: Set<String>
                     switch path {
                     case ["payload", "configure"]: nullable = ["expectedRevision"]
-                    case ["payload", "snapshot", "state"], ["payload", "devices", "state"]:
+                    case ["payload", "snapshot", "state"], ["payload", "devices", "state"],
+                         ["payload", "agentPermission", "state"]:
                         nullable = ["policyRevision", "trigger", "lockOutcome", "shutdownOutcome"]
                     default: nullable = []
                     }
@@ -175,8 +181,9 @@ public struct WireSession: Sendable {
         case .getHealth: localRole == .daemon && (remoteRole == .app || remoteRole == .sessionAgent)
         case .getDevices: localRole == .daemon && remoteRole == .app
         case .devices: localRole == .app && remoteRole == .daemon
-        case .configure, .arm, .disarm, .resetTrigger: localRole == .daemon && remoteRole == .app
-        case .sessionHeartbeat, .sessionReadiness, .lockResult, .enableLockDelivery: localRole == .daemon && remoteRole == .sessionAgent
+        case .configure, .arm, .disarm, .resetTrigger, .requestAgentPermission: localRole == .daemon && remoteRole == .app
+        case .sessionHeartbeat, .sessionReadiness, .lockResult, .enableLockDelivery, .agentPermissionHandled: localRole == .daemon && remoteRole == .sessionAgent
+        case .agentPermission: localRole == .sessionAgent && remoteRole == .daemon
         case .performLock: localRole == .sessionAgent && remoteRole == .daemon
         case .snapshot: remoteRole == .daemon && (localRole == .app || localRole == .sessionAgent)
         }
@@ -203,11 +210,20 @@ public struct WireSession: Sendable {
             guard id.boot == bootID, id.arming > 0 else { throw WireError.invalidPayload }
         case let .snapshot(state):
             try validateSnapshot(state, now: now)
+        case let .agentPermission(_, requestedAt, expiresAt, state):
+            try validateSnapshot(state, now: now)
+            guard !state.armIntent, state.trigger == nil, state.power == .awake,
+                  state.profile == .live, state.session == .activeOwner, now < expiresAt,
+                  requestedAt <= state.generatedAt, expiresAt > requestedAt,
+                  expiresAt - requestedAt <= 5_000 else {
+                throw WireError.invalidPayload
+            }
         case let .devices(inventory, state):
             guard inventory.count <= 128, inventory.allSatisfy(\.valid),
                   Set(inventory.map(\.instance)).count == inventory.count else { throw WireError.invalidPayload }
             try validateSnapshot(state, now: now)
-        case .hello, .getHealth, .getDevices, .disarm, .enableLockDelivery: break
+        case .hello, .getHealth, .getDevices, .disarm, .enableLockDelivery,
+             .requestAgentPermission, .agentPermissionHandled: break
         }
     }
 

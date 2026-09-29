@@ -1,6 +1,6 @@
 # Native Entwicklung
 
-Entwicklungsfassung 0.4.0: USB-Auswahl, Simulationen, Dienstdiagnose, manueller Sperrtest und integrierter automatischer Sperrtest nach ausdrücklichem ARM. Die Kette ist noch nicht auf installierten Diensten und echter Hardware qualifiziert. Es wurde kein Dienst durch den Build installiert.
+Entwicklungsfassung 0.4.1: USB-Auswahl, Simulationen, Dienstdiagnose, manueller Sperrtest und integrierter automatischer Sperrtest nach ausdrücklichem ARM. Die Kette ist noch nicht auf installierten Diensten und echter Hardware qualifiziert. Es wurde kein Dienst durch den Build installiert.
 
 ## Voraussetzungen und Gesamtprüfung
 
@@ -10,7 +10,7 @@ Apple Silicon, macOS 27.x, Xcode 27 / Swift 6.4. Projektgenerierung: XcodeGen 2.
 bash tools/validation/check.sh
 ```
 
-167 Tests über Core, USB, IPC, Services einschließlich DaemonRuntime, Actions und Probe, anschließend Debug-/Release-Builds der drei Targets. Selbstdiagnose, Signaturen, eingebettete Helper/Launch-Pfade und direkte Imports werden geprüft. Der öffentliche Eingabeadapter ist in App und SessionAgent erlaubt, niemals im Root-Daemon; private Sperr- und Shutdown-Funktionen bleiben ausgeschlossen. Eine Importprüfung ist kein vollständiger Sicherheitsbeweis.
+179 Tests über Core, USB, IPC, Services einschließlich DaemonRuntime, Actions und Probe, anschließend Debug-/Release-Builds der drei Targets. Selbstdiagnose, Signaturen, eingebettete Helper/Launch-Pfade und direkte Imports werden geprüft. Der öffentliche Eingabeadapter ist in App und SessionAgent erlaubt, niemals im Root-Daemon; private Sperr- und Shutdown-Funktionen bleiben ausgeschlossen. Eine Importprüfung ist kein vollständiger Sicherheitsbeweis.
 
 Keine echten Eingaben, Berechtigungsdialoge, Dienste, Gerätebefehle oder Shutdowns im Testablauf. Anonyme lokale XPC-Verbindungen und temporäre Konfigurationsdateien sind Bestandteil der Tests. Das temporäre Buildverzeichnis vermeidet Finder-/File-Provider-Metadaten aus dem Projektpfad. Mit `PULLOCK_VALIDATION_ROOT` lässt es sich wiederverwenden.
 
@@ -35,7 +35,7 @@ Im Menü stehen sechs bezeichnete Simulationen, Dienstdiagnose und „Test scree
 
 Die App enthält zwei Helfer und Launch-Definitionen. Die UI registriert sie nur auf ausdrücklichen Wunsch über `SMAppService`; sie zeigt Freigabestatus getrennt vom Health-Status. Apple-Zertifikat und Installation in `/Applications` sind UI-Voraussetzungen; macOS verlangt für Apps mit LaunchDaemon zusätzlich Notarisierung und Administratorfreigabe. Nicht registrierte oder ad-hoc-signierte Entwicklungsbuilds stellen deshalb keinen Systemdienst bereit.
 
-`PullockDaemon --serve-health` ist ein expliziter root-Dienststart mit festen Rollenendpunkten, autoritativer Auswahl sowie USB-/Power-/Konsolenbeobachtung. Der Kommandozeilenname bleibt bestehen; dieser Modus aktiviert nun auch den eng begrenzten Aktionsversand zum Agenten. `PullockSessionAgent --monitor-health` ist ein Benutzerprozess mit Readiness-Abfrage, authentifiziertem Rückkanal und unabhängigem Lease-Watchdog. Er fordert beim Login keine Berechtigung an. Default/`--self-check` starten keine Listener und keinen Aktionspfad. Clients können keine USB-Ereignisse injizieren. Protokoll v2 verlangt ein gemeinsames Update aller drei Komponenten. [Dienstimplementierung](../packages/PullockServices/README.md).
+`PullockDaemon --serve-health` ist ein expliziter root-Dienststart mit festen Rollenendpunkten, autoritativer Auswahl sowie USB-/Power-/Konsolenbeobachtung. Der Kommandozeilenname bleibt bestehen; dieser Modus aktiviert nun auch den eng begrenzten Aktionsversand zum Agenten. `PullockSessionAgent --monitor-health` ist ein Benutzerprozess mit Readiness-Abfrage, authentifiziertem Rückkanal und unabhängigem Lease-Watchdog. Er fordert beim Login keine Berechtigung an. Unter „Background services“ lässt sich nach Verbindung und im entschärften Zustand „Request session agent permission“ auslösen. Der einmalige, befristete Auftrag läuft über das authentifizierte XPC; der Agent ruft die Berechtigungsanfrage selbst auf. Dieser Schritt sendet keine Tasteneingabe und bestätigt keine erteilte Berechtigung. Die nächste Readiness-Meldung enthält das eigene Preflight-Ergebnis. Default/`--self-check` starten keine Listener und keinen Aktionspfad. Clients können keine USB-Ereignisse injizieren. Protokoll v3 verlangt ein gemeinsames Update aller drei Komponenten. [Dienstimplementierung](../packages/PullockServices/README.md).
 
 `PullockDaemon --inspect-runtime` prüft separat für eine Sekunde native USB-/Power-/Konsolenregistrierung und Eventloop-Fortschritt. Er startet keinen XPC-Listener, registriert keinen launchd-Dienst und führt keine Aktionen aus. Die Ausgabe enthält nur eine Geräteanzahl. Dieser optionale lokale OS-Test ist nicht Teil der gewöhnlichen CI.
 

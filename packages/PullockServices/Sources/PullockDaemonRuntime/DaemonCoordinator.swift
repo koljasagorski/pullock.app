@@ -27,6 +27,15 @@ final class DaemonCoordinator {
     private var watcherReady = false
     private var pendingInventory: ObservationEpoch?
     private var draining = false
+    private struct PermissionSetup {
+        let id = UUID()
+        let requestedAt: UInt64
+        let expiresAt: UInt64
+        let generation: UInt64
+        var delivered = false
+    }
+    private var permissionSetup: PermissionSetup?
+    private var nextPermissionRequestAt: UInt64 = 0
 
     init(capabilities: RuntimeCapabilities = .init(),
          clock: @escaping @MainActor () -> UInt64 = { MonotonicTime.milliseconds },
@@ -61,6 +70,27 @@ final class DaemonCoordinator {
         // Reconciliation can be slower than the queue handoff. Never mutate
         // policy/arming after the caller's admission deadline has elapsed.
         try checkDeadline(receivedAt)
+        if let setup = permissionSetup, clock() >= setup.expiresAt { permissionSetup = nil }
+        if case .requestAgentPermission = payload {
+            guard role == .app else { throw AuthorityError.unauthorized }
+            let now = clock()
+            let state = authority.snapshot(now: now)
+            guard !state.armIntent, state.trigger == nil, state.power == .awake,
+                  state.profile == .live, state.session == .activeOwner, lockRouteAvailable(current),
+                  permissionSetup == nil, now >= nextPermissionRequestAt,
+                  now <= UInt64.max - 30_000 else { throw AuthorityError.unavailable }
+            // No permission result is inferred from enqueueing. Readiness must
+            // still come from the agent's own post-event preflight afterwards.
+            permissionSetup = PermissionSetup(requestedAt: now, expiresAt: now + 5_000, generation: state.healthGeneration)
+            nextPermissionRequestAt = now + 30_000
+            return try authority.command(.getHealth, role: role, owner: current, now: clock())
+        }
+        if case let .agentPermissionHandled(id) = payload {
+            guard role == .sessionAgent else { throw AuthorityError.unauthorized }
+            if permissionSetup?.id == id, permissionSetup?.delivered == true { permissionSetup = nil }
+            return try authority.command(.getHealth, role: role, owner: current, now: clock())
+        }
+        if case .arm = payload, permissionSetup != nil { throw AuthorityError.unavailable }
         let effective: WirePayload
         if case let .sessionReadiness(generation, progress, available) = payload {
             effective = .sessionReadiness(generation: generation, progress: progress,
@@ -73,6 +103,19 @@ final class DaemonCoordinator {
         default: break
         }
         drainEffects()
+        if case let .sessionReadiness(generation, _, _) = effective, var setup = permissionSetup {
+            let state = authority.snapshot(now: clock())
+            guard clock() < setup.expiresAt, setup.generation == state.healthGeneration,
+                  generation == setup.generation, !state.armIntent, state.trigger == nil,
+                  state.power == .awake, state.session == .activeOwner, lockRouteAvailable(current) else {
+                permissionSetup = nil
+                return .snapshot(state: state)
+            }
+            if !setup.delivered {
+                setup.delivered = true; permissionSetup = setup
+                return .agentPermission(id: setup.id, requestedAt: setup.requestedAt, expiresAt: setup.expiresAt, state: state)
+            }
+        }
         // A command's response includes the result of its fresh reconciliation.
         if case .snapshot = result { return .snapshot(state: authority.snapshot(now: clock())) }
         return result
@@ -100,6 +143,7 @@ final class DaemonCoordinator {
 
     func observationFailed() {
         guard running else { return }
+        permissionSetup = nil
         watcherReady = false; pendingInventory = nil
         try? authority.lifecycle(.watcherRestarted, now: clock())
         authority.processed(.watcher, condition: .failed, now: clock())
@@ -108,6 +152,7 @@ final class DaemonCoordinator {
 
     func lifecycle(_ event: ProtectionEvent) {
         guard running else { return }
+        permissionSetup = nil
         if case .watcherRestarted = event { observationFailed(); return }
         do { try authority.lifecycle(event, now: clock()) }
         catch { observationFailed(); return }
@@ -130,6 +175,7 @@ final class DaemonCoordinator {
             let current = try validateOwner(owner.uid, owner.auditSession)
             try current.validate(effectiveUID: owner.uid, auditSession: owner.auditSession)
         } catch {
+            permissionSetup = nil
             ownerActive = false
             authority.ownerBecameInactive(now: clock())
             pendingInventory = nil

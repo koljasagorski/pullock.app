@@ -4,7 +4,7 @@
 
 Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch. Die App erkennt beobachtbare, kompatible USB-Geräte verschiedener Hersteller: USB-Sticks und andere USB-Devices. Du wählst eines aus und schaltest Pullock ausdrücklich scharf; sobald genau dieses Gerät getrennt wird, soll Pullock eine Sitzungssperre anfordern. Inhalte, Dateien und Credentials des Geräts werden nicht gelesen. Ein bestimmter Hersteller oder eine Seriennummer sind für diesen Modus nicht erforderlich.
 
-> **Entwicklungsstand 0.4.0: integrierter automatischer Sperrtest, noch kein qualifiziertes Schutzprodukt und kein öffentlicher App-Release.** Nach Einrichtung signierter, freigegebener Dienste und ausdrücklichem ARM kann die App echte Sperranforderungen auslösen. Builds, Selbstdiagnosen und automatisierte Tests aktivieren diesen Weg nicht. Die erste fertige App wird erst nach den verbleibenden Hardware- und Distributionsprüfungen veröffentlicht.
+> **Entwicklungsstand 0.4.1: integrierter automatischer Sperrtest, noch kein qualifiziertes Schutzprodukt und kein öffentlicher App-Release.** Nach Einrichtung signierter, freigegebener Dienste und ausdrücklichem ARM kann die App echte Sperranforderungen auslösen. Builds, Selbstdiagnosen und automatisierte Tests aktivieren diesen Weg nicht. Die erste fertige App wird erst nach den verbleibenden Hardware- und Distributionsprüfungen veröffentlicht.
 
 ## Was bereits funktioniert
 
@@ -12,14 +12,14 @@ Pullock wird eine native macOS-Menu-Bar-App für einen physischen USB-Killswitch
 | --- | --- |
 | Zustandskern | 41 Tests; Auswahl an Boot/Watcher/Power gebunden, Health-Leases, Ereignisreihenfolge, verriegelte Trigger und getrennte Aktionsanforderungen |
 | USB-Beobachtung | 20 Tests; passiver IOKit-Watcher, aktuelle Geräte verschiedener Hersteller, Auswahl einer einzelnen Verbindung und deren sichere Invalidierung |
-| IPC | 30 Vertrag-/Signatur-/Rollen-/Budgettests; Protokoll v2 weist ältere Dienste vor dem Handshake ab |
-| Native Dienste / Speicher | 47 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Limits, Speicherhärtung, Aktions-Deduplizierung und unabhängiger Session-Watchdog |
-| Daemon-Laufzeit | 17 Tests; Inventare, Power-/Session-Grenzen, abbrechbare Zustellung und vollständige Auswahl→ARM→Removal→XPC→Mock-Aktion→Ergebnis-Kette |
-| Sperrkurzbefehl | 4 Mock-Tests; öffentlicher Control–Command–Q-Adapter, Berechtigungs-/Sitzungsprüfung und Tastaturlayout-Auflösung |
+| IPC | 32 Vertrag-/Signatur-/Rollen-/Budgettests; Protokoll v3 weist ältere Dienste vor dem Handshake ab |
+| Native Dienste / Speicher | 52 Tests; reale anonyme NSXPC-Verbindungen, Signaturablehnung, Owner-Neuprüfung, Limits, Speicherhärtung, Aktions-Deduplizierung und unabhängiger Session-Watchdog |
+| Daemon-Laufzeit | 21 Tests; Inventare, Power-/Session-Grenzen, abbrechbare Zustellung und vollständige Auswahl→ARM→Removal→XPC→Mock-Aktion→Ergebnis-Kette |
+| Sperrkurzbefehl | 5 Mock-Tests; öffentlicher Control–Command–Q-Adapter, Berechtigungs-/Sitzungsprüfung und Tastaturlayout-Auflösung |
 | Hardware-Probe | 8 Tests; passive Diagnose, bereinigte Reports, keine echten Aktionen |
 | App und eingebettete Helfer | Debug-/Release-Builds; Selbstdiagnosen, Signatur- und Importprüfung; feste Launch-Definitionen |
 
-Die **167 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
+Die **179 automatischen Tests** führen keine echten Sperren, Shutdowns, Gerätebefehle oder Dienstregistrierungen aus. Native anonyme XPC-Tests ersetzen keine Prüfung installierter, separat laufender Produktionsdienste.
 
 ## So ist der Killswitch vorgesehen
 
@@ -74,7 +74,7 @@ flowchart LR
 
 Nur der SessionAgent und der getrennte manuelle App-Test verwenden den Eingabeadapter. Der Root-Daemon linkt weder Eingabe- noch Shutdown-Adapter. Ein eindeutig authentifizierter Agent, aktive Owner-Sitzung, Berechtigungs-/Layout-Prüfung, aktuelle Inventare und frische Health-Leases sind Voraussetzung für ARMED. Bei Verlust einer zuvor gesunden Kette kann eine Sperranforderung folgen. Ein unabhängiger Agent-Watchdog merkt sich ausschließlich authentifizierte, frische ARMED-Leases. Lokale Sleep-/Session-Grenzen löschen diese Berechtigung; verspätete Antworten derselben Scharfschaltung stellen sie nicht wieder her.
 
-Alle Trigger bleiben bis zum ausdrücklichen Reset verriegelt. Der Rückkanal bindet Aktionen an Boot, Nonce, Sequenz, Action-ID und Ablauf. Unsichere Zustellungen werden nicht automatisch wiederholt. Protokoll v2 verlangt zusammenpassende App-, Daemon- und Agent-Versionen; alle eingebetteten Komponenten müssen gemeinsam aktualisiert werden.
+Alle Trigger bleiben bis zum ausdrücklichen Reset verriegelt. Der Rückkanal bindet Aktionen an Boot, Nonce, Sequenz, Action-ID und Ablauf. Unsichere Zustellungen werden nicht automatisch wiederholt. Protokoll v3 verlangt zusammenpassende App-, Daemon- und Agent-Versionen; alle eingebetteten Komponenten müssen gemeinsam aktualisiert werden.
 
 - IORegistry-Terminierung beweist das Ende einer beobachteten Verbindung, nicht den mechanischen Grund. Hub-/Bus-Resets können dieselbe Wirkung haben.
 - Der Systemkurzbefehl setzt Eingabeberechtigung, geeignete Sitzung und Tastaturkonfiguration voraus. Umkonfigurierte Systemshortcuts und Systemstörungen müssen praktisch berücksichtigt werden.
@@ -88,7 +88,7 @@ Vor Freigabe fehlen reale Removal-/Lock-/Power-/Session-Tests der integrierten A
 
 1. Den aktuellen Quellstand prüfen und eine signierte, notarisierte Entwicklungs-App vorbereiten. Ein ad-hoc-Build kann die authentifizierten installierten Dienste nicht ersetzen.
 2. App unter `/Applications` ablegen, Dienste über die App registrieren und in macOS freigeben. Beide Statusanzeigen prüfen.
-3. Die Eingabeberechtigung für den SessionAgent einrichten. Der separate manuelle App-Test prüft nur den App-Prozess; seine Berechtigung beweist keine Berechtigung des Agenten.
+3. Hintergrundverbindung herstellen und unter „Background services“ → „Request session agent permission“ die Eingabeberechtigung aus dem SessionAgent anfordern. Den macOS-Dialog beziehungsweise die Accessibility-Einstellungen abschließen. Der separate manuelle App-Test prüft nur den App-Prozess; seine Berechtigung beweist keine Berechtigung des Agenten.
 4. Hintergrundverbindung herstellen, genau ein USB-Gerät auswählen und die Voraussetzungen prüfen. **„Arm and enable real lock requests“** aktiviert den echten Test bewusst.
 5. Gewähltes Gerät entfernen, Sperrbildschirm und normale Entsperrung prüfen. Auch Monitor-/Dienstfehler können bei scharfgeschaltetem Test eine Sperranforderung auslösen.
 6. Trigger zurücksetzen und vor Beenden oder Entfernen der Dienste disarmen. Nach Replug, Sleep oder Sitzungswechsel die aktuelle Verbindung neu auswählen.

@@ -92,7 +92,21 @@ func selectedRemovalTraversesAuthenticatedCommandsAndReverseActionExactlyOnce() 
     _ = try await app.request(.configure(policy: policy, expectedRevision: nil))
     fixture.host.pulse()
     _ = try await agent.request(.sessionReadiness(generation: fixture.host.cache.load().healthGeneration,
-        progress: 1, lockAvailable: true))
+        progress: 1, lockAvailable: false))
+    _ = try await app.request(.requestAgentPermission)
+    let setup = try await agent.request(.sessionReadiness(generation: fixture.host.cache.load().healthGeneration,
+        progress: 2, lockAvailable: false))
+    guard case let .agentPermission(id, requestedAt, expiresAt, setupState) = setup else {
+        Issue.record("Missing permission setup over authenticated XPC"); return
+    }
+    let permission = SessionPermissionGate()
+    var permissionCalls = 0
+    #expect(permission.handle(id: id, requestedAt: requestedAt, expiresAt: expiresAt,
+        state: setupState, ticket: permission.ticket) { permissionCalls += 1 })
+    #expect(permissionCalls == 1 && fixture.calls.isEmpty)
+    _ = try await agent.request(.agentPermissionHandled(id: id))
+    _ = try await agent.request(.sessionReadiness(generation: fixture.host.cache.load().healthGeneration,
+        progress: 3, lockAvailable: true))
     _ = try await app.request(.arm(expectedRevision: 1))
     #expect(fixture.host.cache.load().isProtected(at: MonotonicTime.milliseconds))
 

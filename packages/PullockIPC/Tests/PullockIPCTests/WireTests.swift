@@ -35,19 +35,49 @@ private struct Peer {
 }
 
 @Test func legacyReadinessContractIsRejectedBeforeHandshake() throws {
-    var p = Peer()
-    let oldHello = try p.packet(.hello(role: .app), sequence: 1, version: 1)
-    #expect(throws: WireError.unsupportedVersion) { try p.session.receive(oldHello, now: 100) }
-    #expect(!p.session.established)
+    for version in [1, 2] {
+        var p = Peer()
+        let oldHello = try p.packet(.hello(role: .app), sequence: 1, version: version)
+        #expect(throws: WireError.unsupportedVersion) { try p.session.receive(oldHello, now: 100) }
+        #expect(!p.session.established)
 
-    let nonce = UUID()
-    let request = try JSONSerialization.data(withJSONObject: ["version": 1, "nonce": nonce.uuidString])
-    #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.request(request) }
-    let reply = try JSONSerialization.data(withJSONObject: ["version": 1, "nonce": nonce.uuidString,
-        "connectionID": UUID().uuidString, "bootID": UUID().uuidString])
-    #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.reply(reply, expectedNonce: nonce) }
-    let current = BootstrapRequest(nonce: nonce)
-    #expect(try BootstrapCodec.request(BootstrapCodec.encode(current)) == current)
+        let nonce = UUID()
+        let request = try JSONSerialization.data(withJSONObject: ["version": version, "nonce": nonce.uuidString])
+        #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.request(request) }
+        let reply = try JSONSerialization.data(withJSONObject: ["version": version, "nonce": nonce.uuidString,
+            "connectionID": UUID().uuidString, "bootID": UUID().uuidString])
+        #expect(throws: WireError.unsupportedVersion) { try BootstrapCodec.reply(reply, expectedNonce: nonce) }
+        let current = BootstrapRequest(nonce: nonce)
+        #expect(try BootstrapCodec.request(BootstrapCodec.encode(current)) == current)
+    }
+}
+
+@Test func permissionSetupCannotBeRequestedOrAcknowledgedByTheWrongRole() throws {
+    var app = Peer(), agent = Peer(remote: .sessionAgent)
+    try app.hello(); try agent.hello()
+    #expect(throws: WireError.roleViolation) {
+        try agent.session.receive(agent.packet(.requestAgentPermission), now: 100)
+    }
+    #expect(throws: WireError.roleViolation) {
+        try app.session.receive(app.packet(.agentPermissionHandled(id: UUID())), now: 100)
+    }
+    #expect(try app.session.receive(app.packet(.requestAgentPermission), now: 100) == .requestAgentPermission)
+}
+
+@Test func permissionDeliveryRequiresAgentRoleFreshDisarmedSessionAndBoundedLifetime() throws {
+    var core = try ProtectionReducer(bootID: Peer.boot)
+    let state = core.process(EventEnvelope(bootID: Peer.boot, source: .session, sequence: 1,
+        observedAt: 100, event: .session(.activeOwner)), at: 100).snapshot
+    var agent = Peer(local: .sessionAgent, remote: .daemon), app = Peer(local: .app, remote: .daemon)
+    try agent.hello(); try app.hello()
+    let payload = WirePayload.agentPermission(id: UUID(), requestedAt: 100, expiresAt: 5_100, state: state)
+    #expect(throws: WireError.roleViolation) { try app.session.receive(app.packet(payload), now: 100) }
+    for (requested, expiry) in [(UInt64(101), UInt64(5_100)), (100, 5_101), (100, 100)] {
+        let invalid = WirePayload.agentPermission(id: UUID(), requestedAt: requested, expiresAt: expiry, state: state)
+        #expect(throws: WireError.invalidPayload) { try agent.session.receive(agent.packet(invalid), now: 100) }
+    }
+    #expect(throws: WireError.staleSnapshot) { try agent.session.receive(agent.packet(payload), now: 5_100) }
+    #expect(try agent.session.receive(agent.packet(payload), now: 100) == payload)
 }
 
 @Test func versionConnectionBootAndReplayAreChecked() throws {

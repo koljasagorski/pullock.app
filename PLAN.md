@@ -1,6 +1,6 @@
 # Pullock — Architektur und Umsetzungsplan
 
-Stand: 29. September 2026. **USB-/Power-/Konsolenbeobachtung und Geräteauswahl im Daemon integriert; öffentlicher manueller Sperrtest vorhanden. Testarchiv mit Developer ID signiert und notarisiert. Noch kein qualifizierter automatischer Live-Schutz.**
+Stand: 29. September 2026. **USB-/Power-/Konsolenbeobachtung und Geräteauswahl im Daemon integriert; öffentlicher manueller Sperrtest und authentifizierte Agent-Berechtigungseinrichtung vorhanden. Testarchiv mit Developer ID signiert und notarisiert. Noch kein qualifizierter automatischer Live-Schutz.**
 
 **Aktuelle Produktentscheidung:** Der Nutzer wählt eine vorhandene USB-Verbindung, ohne Seriennummer oder Inhaltszugriff. Entfernung, Neustart, Sleep und Session-/Watcher-Wechsel erfordern erneute Auswahl. Der Nutzer hat Control–Command–Q mit macOS-Eingabeberechtigung und der ehrlichen Ergebnismeldung „Sperre angefordert“ freigegeben. [ADR 0003](docs/decisions/0003-connection-switch-and-shortcut.md) ersetzt dazu ältere Serial-/Lock-Entscheidungsgates in diesem historischen Plan. Reale Funktions-, System- und Distributionsprüfungen bleiben erforderlich.
 

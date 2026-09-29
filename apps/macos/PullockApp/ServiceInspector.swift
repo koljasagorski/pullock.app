@@ -19,6 +19,8 @@ final class ServiceInspector {
     private(set) var selectionMessage = "Choose a USB connection reported by the background service."
     private(set) var busy = false
     private(set) var mayBeArmed = false
+    private var permissionRetryAt: UInt64 = 0
+    private var permissionSetupUntil: UInt64 = 0
     @ObservationIgnored private var client: NativeHealthClient?
     @ObservationIgnored private var polling: Task<Void, Never>?
     @ObservationIgnored private var pendingCommand: (payload: WirePayload, instance: UInt64?)?
@@ -37,8 +39,19 @@ final class ServiceInspector {
     }
     var canChoose: Bool { !busy && freshSnapshot?.armIntent == false && freshSnapshot?.trigger == nil }
     var canArm: Bool {
-        guard !busy, selectedInstance != nil, let state = freshSnapshot else { return false }
+        guard !busy, MonotonicTime.milliseconds >= permissionSetupUntil,
+              selectedInstance != nil, let state = freshSnapshot else { return false }
         return !state.armIntent && state.trigger == nil && state.matchingDeviceCount == 1 && state.issues.isEmpty
+    }
+    var canRequestAgentPermission: Bool {
+        guard canChoose, let state = freshSnapshot, state.power == .awake,
+              state.session == .activeOwner, MonotonicTime.milliseconds >= permissionRetryAt else { return false }
+        return !state.issues.contains {
+            switch $0 {
+            case .missingHealth(.agent), .staleHealth(.agent), .unhealthy(.agent): true
+            default: false
+            }
+        }
     }
     var lockRouteReady: Bool {
         guard let state = freshSnapshot else { return false }
@@ -110,6 +123,11 @@ final class ServiceInspector {
                         pendingCommand = nil
                         guard case let .snapshot(state) = try await client.request(pending.payload) else { throw HealthClientError.invalidReply }
                         snapshot = state; mayBeArmed = state.armIntent
+                        if case .requestAgentPermission = pending.payload {
+                            permissionRetryAt = MonotonicTime.milliseconds + 30_000
+                            permissionSetupUntil = MonotonicTime.milliseconds + 5_000
+                            message = "Setup request sent to the session agent. Complete macOS permission setup, then check its readiness here. You can request setup again after 30 seconds."
+                        }
                         if let instance = pending.instance {
                             selectedInstance = instance
                             selectionMessage = "Device selected. Arm Pullock when you are ready."
@@ -166,6 +184,15 @@ final class ServiceInspector {
         guard canArm, let revision = freshSnapshot?.policyRevision else { return }
         pendingCommand = (.arm(expectedRevision: revision), nil)
         busy = true; mayBeArmed = true
+    }
+
+    func requestAgentPermission() {
+        guard canRequestAgentPermission else { return }
+        pendingCommand = (.requestAgentPermission, nil)
+        busy = true
+        permissionRetryAt = MonotonicTime.milliseconds + 30_000
+        permissionSetupUntil = MonotonicTime.milliseconds + 6_000
+        message = "Requesting permission setup in the session agent…"
     }
 
     func disarm() {
@@ -233,9 +260,15 @@ struct ServiceInspectorView: View {
                 Button("Open macOS Login Items") { SMAppService.openSystemSettingsLoginItems() }
             }
             Section("Screen lock permission") {
-                LabeledContent("Session agent", value: inspector.lockRouteReady ? "Ready for lock requests" : "Permission, session or keyboard layout needs checking")
-                Text("Allow Pullock Development in macOS Accessibility. If the agent is still unavailable, use the + button there to add the bundled PullockSessionAgent shown by the button below. Pullock checks permission without showing a prompt at login.")
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    LabeledContent("Session agent", value: inspector.lockRouteReady ? "Ready for lock requests" : "Permission, session or keyboard layout needs checking")
+                    Button("Request session agent permission") { inspector.requestAgentPermission() }
+                        .disabled(!inspector.canRequestAgentPermission)
+                }
+                Text("Connect to the background service, then request permission while Pullock is disarmed. The session agent asks macOS for its own permission to send the lock shortcut. Complete the macOS prompt or Accessibility settings; this setup does not lock your Mac. Permission is never requested automatically at login.")
                     .foregroundStyle(.secondary)
+                Text("If macOS does not show a prompt, open Accessibility settings and add the bundled PullockSessionAgent using the + button. The separate manual screen lock test checks the app's permission only.")
+                    .font(.callout).foregroundStyle(.secondary)
                 HStack {
                     Button("Open Accessibility settings") {
                         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {

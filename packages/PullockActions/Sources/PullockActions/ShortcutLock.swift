@@ -12,6 +12,7 @@ public enum LockSubmission: String, Sendable { case requested }
 protocol ShortcutBackend {
     var permitted: Bool { get }
     var activeSession: Bool { get }
+    func requestPermission() -> Bool
     func qKeyCode() -> UInt16?
     func postControlCommandQ(keyCode: UInt16) throws
 }
@@ -36,6 +37,13 @@ public struct ShortcutLock {
     /// The UI calls this only from the user's explicit permission button.
     @discardableResult public static func requestPermission() -> Bool { CGRequestPostEventAccess() }
 
+    /// Called by the agent only after an explicit, authenticated setup request.
+    /// Permission setup never creates or posts a keyboard event.
+    @discardableResult public func requestPermissionForActiveSession() throws -> Bool {
+        guard backend.activeSession else { throw LockShortcutError.inactiveSession }
+        return backend.permitted || backend.requestPermission()
+    }
+
     @discardableResult public func requestLock() throws -> LockSubmission {
         try preflight()
         guard let keyCode = backend.qKeyCode() else { throw LockShortcutError.unsupportedKeyboardLayout }
@@ -47,6 +55,7 @@ public struct ShortcutLock {
 @MainActor
 private struct QuartzShortcutBackend: ShortcutBackend {
     var permitted: Bool { CGPreflightPostEventAccess() }
+    func requestPermission() -> Bool { CGRequestPostEventAccess() }
 
     var activeSession: Bool {
         guard let session = CGSessionCopyCurrentDictionary() as? [String: Any],

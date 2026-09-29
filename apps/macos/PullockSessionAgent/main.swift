@@ -17,10 +17,11 @@ if arguments == ["--monitor-health"] {
         }
         let receiver = NativeLockReceiver(executor: executor)
         let lease = SessionLeaseGuard(executor: executor)
+        let permission = SessionPermissionGate()
         let notifications = NSWorkspace.shared.notificationCenter
         let observers = [NSWorkspace.willSleepNotification, NSWorkspace.sessionDidResignActiveNotification].map { name in
             notifications.addObserver(forName: name, object: nil, queue: .main) { _ in
-                MainActor.assumeIsolated { lease.suspend() }
+                MainActor.assumeIsolated { lease.suspend(); permission.suspend() }
             }
         }
         let timer = DispatchSource.makeTimerSource(queue: .main)
@@ -37,16 +38,26 @@ if arguments == ["--monitor-health"] {
                         var state = try await client.enableLockDelivery()
                         try lease.observe(state)
                         while !Task.isCancelled {
+                            let permissionTicket = permission.ticket
                             let available: Bool
                             do { try adapter.preflight(); available = true } catch { available = false }
                             let response = try await client.request(.sessionReadiness(generation: state.healthGeneration,
                                 progress: MonotonicTime.milliseconds, lockAvailable: available))
-                            guard case let .snapshot(next) = response else { throw HealthClientError.invalidReply }
-                            state = next
+                            switch response {
+                            case let .snapshot(next): state = next
+                            case let .agentPermission(id, requestedAt, expiresAt, next):
+                                state = next
+                                _ = try? permission.handle(id: id, requestedAt: requestedAt, expiresAt: expiresAt, state: next,
+                                    ticket: permissionTicket) { _ = try adapter.requestPermissionForActiveSession() }
+                                let acknowledgement = try await client.request(.agentPermissionHandled(id: id))
+                                guard case let .snapshot(updated) = acknowledgement else { throw HealthClientError.invalidReply }
+                                state = updated
+                            default: throw HealthClientError.invalidReply
+                            }
                             try lease.observe(state)
                             try await Task.sleep(for: .seconds(1))
                         }
-                    } catch { /* Reconnect without replaying any completed action. */ }
+                    } catch { permission.suspend() /* Reconnect without replaying setup or actions. */ }
                     await client.close()
                 } catch { /* Retry only the same fixed, authenticated endpoint. */ }
                 try? await Task.sleep(for: .seconds(2))

@@ -31,6 +31,20 @@ private final class LeaseFixture {
     }
 }
 
+@Test @MainActor func permissionGateRejectsArmedAndTriggeredSnapshots() throws {
+    let f = try LeaseFixture(), gate = SessionPermissionGate(clock: { f.now })
+    var calls = 0
+    let armed = f.host.snapshot(now: f.now)
+    #expect(!gate.handle(id: UUID(), requestedAt: 100, expiresAt: 5_100,
+        state: armed, ticket: gate.ticket) { calls += 1 })
+    f.host.removed(instance: 12, epoch: armed.epoch, now: f.now)
+    let triggered = f.host.snapshot(now: f.now)
+    #expect(triggered.trigger != nil)
+    #expect(!gate.handle(id: UUID(), requestedAt: 100, expiresAt: 5_100,
+        state: triggered, ticket: gate.ticket) { calls += 1 })
+    #expect(calls == 0)
+}
+
 @Test @MainActor func stalledDaemonLeaseRequestsOneFallbackAndSharesDeduplication() throws {
     let f = try LeaseFixture()
     let state = f.host.snapshot(now: f.now)

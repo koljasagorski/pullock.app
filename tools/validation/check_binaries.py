@@ -23,7 +23,7 @@ for component, binary in binaries.items():
     report = json.loads(output.stdout)
     assert report["component"] == component
     assert report["realActions"] == 0
-    assert report["protocolVersion"] == 2
+    assert report["protocolVersion"] == 3
     if component == "app":
         assert report["simulationScenarios"] == 6
     else:

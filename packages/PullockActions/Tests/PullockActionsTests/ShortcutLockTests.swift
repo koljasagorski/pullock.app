@@ -7,11 +7,26 @@ import Testing
     var key: UInt16? = 12
     var posted: [UInt16] = []
     var failure = false
+    var permissionRequests = 0
+    func requestPermission() -> Bool { permissionRequests += 1; return permitted }
     func qKeyCode() -> UInt16? { key }
     func postControlCommandQ(keyCode: UInt16) throws {
         if failure { throw LockShortcutError.eventCreationFailed }
         posted.append(keyCode)
     }
+}
+
+@MainActor @Test func explicitPermissionSetupNeverPostsInputAndRequiresActiveSession() throws {
+    let backend = Backend(), adapter = ShortcutLock(backend: backend)
+    backend.permitted = false
+    #expect(try adapter.requestPermissionForActiveSession() == false)
+    #expect(backend.permissionRequests == 1 && backend.posted.isEmpty)
+    backend.activeSession = false
+    #expect(throws: LockShortcutError.inactiveSession) { try adapter.requestPermissionForActiveSession() }
+    #expect(backend.permissionRequests == 1 && backend.posted.isEmpty)
+    backend.activeSession = true; backend.permitted = true
+    #expect(try adapter.requestPermissionForActiveSession())
+    #expect(backend.permissionRequests == 1 && backend.posted.isEmpty)
 }
 
 @MainActor @Test func preflightNeverPostsInput() throws {
